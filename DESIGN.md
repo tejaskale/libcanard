@@ -5,19 +5,18 @@
 The following list contains main design goals in the order of importance.
 
 * *Small ROM footprint*.
-    A minimal node that periodically publishes `uavcan.protocol.NodeStatus` and responds to `uavcan.protocol.GetNodeInfo` should not require more than 4K of ROM.
-    For reference, a similar application based on libuavcan requires 19K of ROM (LPC11C24).
+  A minimal node that periodically publishes `uavcan.protocol.NodeStatus` and responds to `uavcan.protocol.GetNodeInfo` should not require more than 4K of ROM.
+  For reference, a similar application based on libuavcan requires 19K of ROM (LPC11C24).
 * *Small RAM footprint*.
-    A node like in the example above should not require more than 4K of RAM, including the stack and buffers.
-    For reference, a similar application based on libuavcan requires about 6K of RAM.
+  A node like in the example above should not require more than 4K of RAM, including the stack and buffers.
+  For reference, a similar application based on libuavcan requires about 6K of RAM.
 * *Determinism*.
-    Worst case execution time of all code paths should be predictable, which precludes use of heap.
+  Worst case execution time of all code paths should be predictable, which precludes use of heap.
 * *Portability*.
-    The library should not present any specific requirements to the underlying hardware or OS, and it must be coded in standard C99.
-    However, the portability requirement can be superseded by other design goals, such as small memory footprint.
+  The library should not present any specific requirements to the underlying hardware or OS, and it must be coded in standard C99.
+  However, the portability requirement can be superseded by other design goals, such as small memory footprint.
 * *Simplicity*.
-    Unlike libuavcan, which somewhat resembles a framework rather than just a library, this project should not attempt to implement all of the high-level functionality of UAVCAN.
-
+  Unlike libuavcan, which somewhat resembles a framework rather than just a library, this project should not attempt to implement all of the high-level functionality of UAVCAN.
 
 ## Feature set
 
@@ -32,27 +31,29 @@ The following features are considered to comprise the bare minimum:
 The following features are intentionally not supported by the library:
 
 * Support for redundant physical interfaces.
-    Leaving out redundant interfaces allows to significantly simplify the implementation of the transport layer.
+  Leaving out redundant interfaces allows to significantly simplify the implementation of the transport layer.
 * RPC-like abstraction on top of service request/response exchanges.
-    This means that services will be supported simply as independent request and response transfers, unlike the way it is implemented in libuavcan, where a convenient high-level abstraction is provided.
+  This means that services will be supported simply as independent request and response transfers, unlike the way it is implemented in libuavcan, where a convenient high-level abstraction is provided.
 * Time synchronization master.
-    This feature requires some special logic to be supported by the CAN driver and the library itself.
-    Applications that require this functionality are likely to be able to tolerate the memory requirements of libuavcan.
+  This feature requires some special logic to be supported by the CAN driver and the library itself.
+  Applications that require this functionality are likely to be able to tolerate the memory requirements of libuavcan.
 * Multithreaded nodes.
-    Again, this is implemented in libuavcan and is unlikely to be demanded by low-end applications.
+  Again, this is implemented in libuavcan and is unlikely to be demanded by low-end applications.
 * Support for platforms with 64-bit pointers.
-    Vast majority of deeply embedded systems use 32/16/8-bit CPU.
-    Systems that are based on AMD64 can still be supported by means of x86 compatibility mode (although it is recommended to use libuavcan instead).
+  Vast majority of deeply embedded systems use 32/16/8-bit CPU.
+  Systems that are based on AMD64 can still be supported by means of x86 compatibility mode (although it is recommended to use libuavcan instead).
 
 # Architecture
 
 ## Memory management
 
 ### Library state
+
 Entire state of the library should be kept in one instance of a C structure.
 Every API call of the library that depends on the state will be accepting the aforementioned instance as its first argument.
 
 ### Dynamic memory pool
+
 The library should implement a block memory allocator that will be used by the following subsystems (each is described below):
 
 * Incoming transfer buffers.
@@ -65,8 +66,8 @@ For reference, libuavcan uses 64-byte blocks.
 
 Implementation of the block allocation algorithm can be borrowed from libuavcan.
 
-
 ### Transfer buffers
+
 Transfer buffers should be implemented as a singly-linked lists of blocks, where every block is an instance of the following structure:
 
 ```c
@@ -84,11 +85,11 @@ Where `CANARD_MEM_BLOCK_SIZE` is the allocation size (32 bytes).
 According to the transport layer specification, the following operations must be defined for buffers:
 
 * Push bytes.
-    This operation adds a number of bytes (1 to 8 or 1 to 64, depending on the CAN standard used) to the end of the buffer.
-    It will be invoked during reception of multi-frame transfers.
+  This operation adds a number of bytes (1 to 8 or 1 to 64, depending on the CAN standard used) to the end of the buffer.
+  It will be invoked during reception of multi-frame transfers.
 * Pop bits.
-    This operation is used during deserialization of received payload.
-    It returns a number of bits (1 to 64, depending on the type of the field being deserialized) from the buffer to the caller.
+  This operation is used during deserialization of received payload.
+  It returns a number of bits (1 to 64, depending on the type of the field being deserialized) from the buffer to the caller.
 
 New blocks should be allocated ad hoc, however their removal should happen at once, after the data is processed upon completion of transfer reception.
 
@@ -133,11 +134,11 @@ typedef struct CanardRxState
 Few things to note:
 
 * Size of the structure will exceed 32 bytes on platforms where size of the pointer is 64 bits.
-    This, however, is not a problem, because 64 bit platforms are not of interest (see the list of features).
+  This, however, is not a problem, because 64 bit platforms are not of interest (see the list of features).
 * `timestamp_usec` keeps the timestamp at which the transfer that is currently being received was started, i.e. when the first frame of it was received.
-    This value is needed for detection and removal of stale RX state objects, and it is also passed to the application as a transfer reception timestamp.
+  This value is needed for detection and removal of stale RX state objects, and it is also passed to the application as a transfer reception timestamp.
 * The last field of the structure is buffer_head, size of which is 32 - sizeof(CanardRxState).
-    It is intended for keeping first few bytes of incoming transfers.
+  It is intended for keeping first few bytes of incoming transfers.
 
 Value of the field dtid_tt_snid_dnid can be computed with the following helper macro:
 
@@ -152,16 +153,15 @@ Keeping the transfer ID in a single scalar rather than in separate fields should
 
 Using the concepts defined above, the frame reception procedure can be defined roughly as follows:
 
-
 * Check if the application is interested in receiving a transfer with data type ID and transfer type of the newly received frame.
-    If not, exit.
+  If not, exit.
 * Check if there’s an RX state instance for this combination of (data type ID, transfer type, source node ID, destination node ID).
-    If not, instantiate one. If instantiation fails due to lack of memory, exit.
+  If not, instantiate one. If instantiation fails due to lack of memory, exit.
 * Check if the frame matches the expectations of the RX state instance (e.g. toggle bit, transfer ID, payload size, etc - refer to the specification for details).
-    If not, exit.
+  If not, exit.
 * Update the RX state instance with the new frame, append the payload to the buffer if necessary.
 * If the frame is the last one in the transfer, report to the application, then remove all buffered data and prepare the RX state instance for the next transfer.
-    Exit.
+  Exit.
 
 ### TX queue
 
@@ -209,47 +209,47 @@ The documentation should provide advices about how to integrate the library in a
 The following list provides a high-level description of the major use cases:
 
 * *Frame reception*.
-    On a reception of a frame, the application passes it to the library via a dedicated API function.
-    Upon reception of a frame, the library detects its transfer parameters, such as data type ID, transfer type and source node ID.
-    If this is the first frame of a transfer, the library then requests the application via a function pointer on whether the transfer should be received.
-    If the application reports that the transfer is not of interest, the frame will be ignored.
-    Otherwise, the library finds the receiver state instance for the transfer (or creates one if it couldn’t be found), then updates it according to the rules defined in the specification.
-    If the newly received frame was accepted and it was the last frame of the transfer, the library will invoke the appropriate callback (via a function pointer) so that the application can execute the associated business logic.
-    Upon return from the callback, all of the dynamic memory that was allocated for this transfer, if any, will be automatically released, although the RX state instance will be kept.
+  On a reception of a frame, the application passes it to the library via a dedicated API function.
+  Upon reception of a frame, the library detects its transfer parameters, such as data type ID, transfer type and source node ID.
+  If this is the first frame of a transfer, the library then requests the application via a function pointer on whether the transfer should be received.
+  If the application reports that the transfer is not of interest, the frame will be ignored.
+  Otherwise, the library finds the receiver state instance for the transfer (or creates one if it couldn’t be found), then updates it according to the rules defined in the specification.
+  If the newly received frame was accepted and it was the last frame of the transfer, the library will invoke the appropriate callback (via a function pointer) so that the application can execute the associated business logic.
+  Upon return from the callback, all of the dynamic memory that was allocated for this transfer, if any, will be automatically released, although the RX state instance will be kept.
 * *Transfer transmission*.
-    When the application needs to send a transfer, it invokes one of the corresponding functions depending on the type of the transfer (broadcast, request, or response).
-    The library breaks the transfer down into independent CAN frames and stores them into the internal TX queue, using the memory pool.
-    The application then unloads the frames from the TX queue into the CAN driver using two library calls: peek and pop.
+  When the application needs to send a transfer, it invokes one of the corresponding functions depending on the type of the transfer (broadcast, request, or response).
+  The library breaks the transfer down into independent CAN frames and stores them into the internal TX queue, using the memory pool.
+  The application then unloads the frames from the TX queue into the CAN driver using two library calls: peek and pop.
 * *Cleanup of stale transfers*.
-    The user should periodically invoke an API call that will traverse the list of receiver state instances and remove those that were last updated more than T seconds ago.
-    Note that the traversing is computationally inexpensive, as it requires only two operations: 1) switch to the next item; 2) check if the last update timestamp is lower than the current time minus T.
-    Recommended value of T is 3 seconds.
+  The user should periodically invoke an API call that will traverse the list of receiver state instances and remove those that were last updated more than T seconds ago.
+  Note that the traversing is computationally inexpensive, as it requires only two operations: 1) switch to the next item; 2) check if the last update timestamp is lower than the current time minus T.
+  Recommended value of T is 3 seconds.
 * *Data structure serialization and deserialization*.
-    Unlike in libuavcan, this functionality should be completely decoupled from the rest of the library.
-    Note that from the application side, transfer reception and transmission deals with raw binary chunks rather than with structured data.
-    This allows applications to operate on raw data, which is likely to be beneficial in terms of memory footprint and processing time.
-    Those applications that are interested in automatic serialization and deserialization should use independently autogenerated serialization and deserialization code, where serialization and deserialization of every data type will be implemented in a tiny header-only library of its own.
+  Unlike in libuavcan, this functionality should be completely decoupled from the rest of the library.
+  Note that from the application side, transfer reception and transmission deals with raw binary chunks rather than with structured data.
+  This allows applications to operate on raw data, which is likely to be beneficial in terms of memory footprint and processing time.
+  Those applications that are interested in automatic serialization and deserialization should use independently autogenerated serialization and deserialization code, where serialization and deserialization of every data type will be implemented in a tiny header-only library of its own.
 
 The library should provide the following functions for the application:
 
 * *Send a transfer*.
-    Encoded transfer will be stored in the prioritized TX queue (as described above).
-    This function should accept serialized payload, i.e. not a message object.
+  Encoded transfer will be stored in the prioritized TX queue (as described above).
+  This function should accept serialized payload, i.e. not a message object.
 * *Peek one frame from the TX queue*.
-    This function will be used by the application to move frames from the TX queue into the CAN driver.
+  This function will be used by the application to move frames from the TX queue into the CAN driver.
 * *Remove one frame from the TX queue*.
-    This function will be used by the application to remove the frame from the queue once the driver confirmed that it has been accepted for transmission.
+  This function will be used by the application to remove the frame from the queue once the driver confirmed that it has been accepted for transmission.
 * *Process one received frame*.
-    This function will be invoked by the application once the CAN driver reports about reception of a frame.
-    This function will also contain an argument for the RX timestamp of the frame.
+  This function will be invoked by the application once the CAN driver reports about reception of a frame.
+  This function will also contain an argument for the RX timestamp of the frame.
 
 The application should provide the following functions for the library (the application will bind the library to these functions dynamically by means of function pointers):
 
 * *Process received transfer*.
-    The library will be passing information about the received transfer and the raw payload (non-deserialized) into the callback so the application can execute the associated business logic.
+  The library will be passing information about the received transfer and the raw payload (non-deserialized) into the callback so the application can execute the associated business logic.
 * *Determine if the transfer should be received*.
-    The library will be invoking this function on every reception of a CAN frame to check if it should proceed on reception of the transfer.
-    If the application does not need this transfer, the frame will be discarded.
+  The library will be invoking this function on every reception of a CAN frame to check if it should proceed on reception of the transfer.
+  If the application does not need this transfer, the frame will be discarded.
 
 Note that the proposed API does not make any assumptions about the CAN driver interface or its implementation.
 A rough draft of the API definitions is provided below:
@@ -515,7 +515,6 @@ A dynamic DSDL array that contains values of type T and has maximum length N wil
 The first field will be given the same name as the original array, the second field’s name will be appended with “_len”.
 An example is provided below.
 
-
 | DSDL definition | C definition |
 |-----------------|--------------|
 | `Foo[<5] bars`  | `Foo bars[4]; uint16_t bars_len;`
@@ -541,9 +540,11 @@ Since 64-bit systems are not supported by the proposed design, on AMD64 systems 
 A continuous integration environment like Travis CI should be set up early in the project to run the test suite on each commit / pull request.
 
 ## Name
+
 It has been agreed to name the library “libcanard”.
 
 ## License
+
 The library must be released under the MIT open source license.
 A short summary can be found [on tl;dr legal](http://www.tldrlegal.com/l/mit).
 The license statement must declare that the code was developed by the UAVCAN project team.

@@ -19,7 +19,7 @@ The entire library is contained in three files:
 - `canard.c` - the only translation unit; add it to your build or compile it into a separate static library;
 - `canard.h` - the API header; include it in your application;
 - `canard_internals.h` - internal definitions of the library;
-keep this file in the same directory with `canard.c`.
+  keep this file in the same directory with `canard.c`.
 
 Add `canard.c` to your application build, add `libcanard` directory to the include paths,
 and you're ready to roll.
