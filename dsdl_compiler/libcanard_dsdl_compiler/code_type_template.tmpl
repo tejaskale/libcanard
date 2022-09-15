@@ -40,7 +40,7 @@ uint32_t ${type_name}_encode_internal(${type_name}* source,
   void* msg_buf,
   uint32_t offset,
   uint8_t CANARD_MAYBE_UNUSED(root_item),
-  bool tao_enabled)
+  [[maybe_unused]] bool tao_enabled)
 {
   %if union
     // Max Union Tag Value
@@ -185,7 +185,7 @@ int32_t ${type_name}_decode_internal(
   ${type_name}* dest,
   uint8_t** CANARD_MAYBE_UNUSED(dyn_arr_buf),
   int32_t offset,
-  bool tao_enabled)
+  [[maybe_unused]] bool tao_enabled)
 {
     int32_t ret = 0;
     %if has_array
