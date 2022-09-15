@@ -226,7 +226,7 @@ int32_t ${type_name}_decode_internal(
     if (payload_len && tao_enabled)
     {
         //  - Calculate Array length from MSG length
-        dest->${'%s' % ((f.name + '.len'))} = ((payload_len * 8) - offset ) / ${f.bitlen}; // ${f.bitlen} bit array item size
+        dest->${'%s' % ((f.name + '.len'))} = (uint8_t)((payload_len * 8) - offset ) / ${f.bitlen}; // ${f.bitlen} bit array item size
     }
     else
     {
