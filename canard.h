@@ -256,7 +256,7 @@ typedef struct
 typedef struct CanardBufferBlock
 {
     struct CanardBufferBlock* next;
-    uint8_t data[];
+    uint8_t *data;
 } CanardBufferBlock;
 
 /**
@@ -280,7 +280,7 @@ struct CanardRxState
 
     uint16_t payload_crc;
     uint8_t  iface_id;
-    uint8_t buffer_head[];
+    uint8_t *buffer_head;
 };
 CANARD_STATIC_ASSERT(offsetof(CanardRxState, buffer_head) <= 28, "Invalid memory layout");
 CANARD_STATIC_ASSERT(CANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE >= 4, "Invalid memory layout");
