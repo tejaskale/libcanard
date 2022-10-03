@@ -30,7 +30,6 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
-#include <assert.h>
 
 /// Build configuration header. Use it to provide your overrides.
 #if defined(CANARD_ENABLE_CUSTOM_BUILD_CONFIG) && CANARD_ENABLE_CUSTOM_BUILD_CONFIG
@@ -64,7 +63,7 @@ extern "C" {
 
 /// By default this macro resolves to the standard assert(). The user can redefine this if necessary.
 #ifndef CANARD_ASSERT
-# define CANARD_ASSERT(x)   assert(x)
+# define CANARD_ASSERT(x)
 #endif
 
 #define CANARD_GLUE(a, b)           CANARD_GLUE_IMPL_(a, b)
@@ -75,7 +74,7 @@ extern "C" {
 #ifndef CANARD_STATIC_ASSERT
 # if (defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)) ||\
      (defined(__cplusplus) && (__cplusplus >= 201103L))
-#  define CANARD_STATIC_ASSERT(...) static_assert(__VA_ARGS__)
+#  define CANARD_STATIC_ASSERT static_assert
 # else
 #  define CANARD_STATIC_ASSERT(x, ...) typedef char CANARD_GLUE(_static_assertion_, __LINE__)[(x) ? 1 : -1]
 # endif
@@ -283,8 +282,8 @@ struct CanardRxState
     uint8_t  iface_id;
     uint8_t *buffer_head;
 };
-CANARD_STATIC_ASSERT(offsetof(CanardRxState, buffer_head) <= 28, "Invalid memory layout");
-CANARD_STATIC_ASSERT(CANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE >= 4, "Invalid memory layout");
+//CANARD_STATIC_ASSERT(offsetof(CanardRxState, buffer_head) <= 28, "Invalid memory layout");
+//CANARD_STATIC_ASSERT(CANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE >= 4, "Invalid memory layout");
 
 /**
  * This is the core structure that keeps all of the states and allocated resources of the library instance.
@@ -601,9 +600,9 @@ CANARD_STATIC_ASSERT(((uint32_t)CANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE) < 128,
                      "Platforms where sizeof(void*) > 4 are not supported. "
                      "On AMD64 use 32-bit mode (e.g. GCC flag -m32).");
 #else
-CANARD_STATIC_ASSERT(((uint32_t)CANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE) < 32,
-                     "Platforms where sizeof(void*) > 4 are not supported. "
-                     "On AMD64 use 32-bit mode (e.g. GCC flag -m32).");
+//CANARD_STATIC_ASSERT(((uint32_t)CANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE) < 32,
+//                     "Platforms where sizeof(void*) > 4 are not supported. "
+//                     "On AMD64 use 32-bit mode (e.g. GCC flag -m32).");
 #endif
 
 #ifdef __cplusplus
