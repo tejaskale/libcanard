@@ -96,6 +96,7 @@ extern "C" {
 #define CANARD_ERROR_RX_UNEXPECTED_TID                 15
 #define CANARD_ERROR_RX_SHORT_FRAME                    16
 #define CANARD_ERROR_RX_BAD_CRC                        17
+#define CANARD_MESSAGE_COMPLETE                        18
 
 /// The size of a memory block in bytes.
 #if CANARD_ENABLE_CANFD
@@ -494,6 +495,7 @@ void canardPopTxQueue(CanardInstance* ins);
  */
 int16_t canardHandleRxFrame(CanardInstance* ins,
                             const CanardCANFrame* frame,
+                            CanardRxTransfer *out_transfer,
                             uint64_t timestamp_usec);
 
 /**

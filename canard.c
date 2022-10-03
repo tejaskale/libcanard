@@ -311,7 +311,7 @@ void canardPopTxQueue(CanardInstance* ins)
     freeBlock(&ins->allocator, item);
 }
 
-int16_t canardHandleRxFrame(CanardInstance* ins, const CanardCANFrame* frame, uint64_t timestamp_usec)
+int16_t canardHandleRxFrame(CanardInstance* ins, const CanardCANFrame* frame, CanardRxTransfer *out_transfer, uint64_t timestamp_usec)
 {
     const CanardTransferType transfer_type = extractTransferType(frame->id);
     const uint8_t destination_node_id = (transfer_type == CanardTransferTypeBroadcast) ?
@@ -412,27 +412,22 @@ int16_t canardHandleRxFrame(CanardInstance* ins, const CanardCANFrame* frame, ui
     if (IS_START_OF_TRANSFER(tail_byte) && IS_END_OF_TRANSFER(tail_byte)) // single frame transfer
     {
         rx_state->timestamp_usec = timestamp_usec;
-        CanardRxTransfer rx_transfer = {
-            .timestamp_usec = timestamp_usec,
-            .payload_head = frame->data,
-            .payload_len = (uint8_t)(frame->data_len - 1U),
-            .data_type_id = data_type_id,
-            .transfer_type = (uint8_t)transfer_type,
-            .transfer_id = TRANSFER_ID_FROM_TAIL_BYTE(tail_byte),
-            .priority = priority,
-            .source_node_id = source_node_id,
+        out_transfer->timestamp_usec = timestamp_usec;
+        out_transfer->payload_head = frame->data;
+        out_transfer->payload_len = (uint8_t) (frame->data_len - 1U);
+        out_transfer->data_type_id = data_type_id;
+        out_transfer->transfer_type = (uint8_t) transfer_type;
+        out_transfer->transfer_id = TRANSFER_ID_FROM_TAIL_BYTE(tail_byte);
+        out_transfer->priority = priority;
+        out_transfer->source_node_id = source_node_id;
 #if CANARD_ENABLE_CANFD
-            .canfd = frame->canfd,
-            .tao = !(frame->canfd || ins->tao_disabled)
+        out_transfer->canfd = frame->canfd;
+        out_transfer->tao = !(frame->canfd || ins->tao_disabled);
 #elif CANARD_ENABLE_TAO_OPTION
-            .tao = !ins->tao_disabled
+        out_transfer->tao = !ins->tao_disabled;
 #endif
-        };
-
-        ins->on_reception(ins, &rx_transfer);
-
         prepareForNextTransfer(rx_state);
-        return CANARD_OK;
+        return CANARD_MESSAGE_COMPLETE;
     }
 
     if (TOGGLE_BIT(tail_byte) != rx_state->next_toggle)
@@ -522,42 +517,34 @@ int16_t canardHandleRxFrame(CanardInstance* ins, const CanardCANFrame* frame, ui
             }
         }
 
-        CanardRxTransfer rx_transfer = {
-            .timestamp_usec = timestamp_usec,
-            .payload_head = rx_state->buffer_head,
-            .payload_middle = rx_state->buffer_blocks,
-            .payload_tail = (tail_offset >= frame_payload_size) ? NULL : (&frame->data[tail_offset]),
-            .payload_len = (uint16_t)(rx_state->payload_len + frame_payload_size),
-            .data_type_id = data_type_id,
-            .transfer_type = (uint8_t)transfer_type,
-            .transfer_id = TRANSFER_ID_FROM_TAIL_BYTE(tail_byte),
-            .priority = priority,
-            .source_node_id = source_node_id,
+            out_transfer->timestamp_usec = timestamp_usec;
+            out_transfer->payload_head = rx_state->buffer_head;
+            out_transfer->payload_middle = rx_state->buffer_blocks;
+            out_transfer->payload_tail = (tail_offset >= frame_payload_size) ? NULL : (&frame->data[tail_offset]);
+            out_transfer->payload_len = (uint16_t)(rx_state->payload_len + frame_payload_size);
+            out_transfer->data_type_id = data_type_id;
+            out_transfer->transfer_type = (uint8_t)transfer_type;
+            out_transfer->transfer_id = TRANSFER_ID_FROM_TAIL_BYTE(tail_byte);
+            out_transfer->priority = priority;
+            out_transfer->source_node_id = source_node_id;
 
 #if CANARD_ENABLE_CANFD
-            .canfd = frame->canfd,
-            .tao = !(frame->canfd || ins->tao_disabled)
+            out_transfer->canfd = frame->canfd;
+            out_transfer->tao = !(frame->canfd || ins->tao_disabled);
 #elif CANARD_ENABLE_TAO_OPTION
-            .tao = !ins->tao_disabled
+            out_transfer->tao = !ins->tao_disabled;
 #endif
-        };
-
         rx_state->buffer_blocks = NULL;     // Block list ownership has been transferred to rx_transfer!
 
         // CRC validation
         rx_state->calculated_crc = crcAdd((uint16_t)rx_state->calculated_crc, frame->data, frame->data_len - 1U);
-        if (rx_state->calculated_crc == rx_state->payload_crc)
-        {
-            ins->on_reception(ins, &rx_transfer);
-        }
 
         // Making sure the payload is released even if the application didn't bother with it
-        canardReleaseRxTransferPayload(ins, &rx_transfer);
         prepareForNextTransfer(rx_state);
 
         if (rx_state->calculated_crc == rx_state->payload_crc)
         {
-            return CANARD_OK;
+            return CANARD_MESSAGE_COMPLETE;
         }
         else
         {
@@ -1087,7 +1074,7 @@ CANARD_INTERNAL int16_t enqueueTxFrames(CanardInstance* ins,
             }
             // tail byte
             sot_eot = (data_index == payload_len) ? (uint8_t)0x40 : sot_eot;
-            
+
             i = dlcToDataLength(dataLengthToDlc(i+1))-1;
             queue_item->frame.data[i] = (uint8_t)(sot_eot | ((uint32_t)toggle << 5U) | ((uint32_t)*transfer_id & 31U));
             queue_item->frame.id = can_id | CANARD_CAN_FRAME_EFF;
