@@ -411,9 +411,6 @@ void canardForgetLocalNodeID(CanardInstance* ins);
  *
  * For anonymous transfers, maximum data type ID is limited to 3 (see specification for details).
  *
- * Please refer to the specification for more details about data type signatures. Signature for any data type can be
- * obtained in many ways; for example, using the command line tool distributed with Libcanard (see the repository).
- *
  * Pointer to the Transfer ID should point to a persistent variable (e.g. static or heap allocated, not on the stack);
  * it will be updated by the library after every transmission. The Transfer ID value cannot be shared between
  * transfers that have different descriptors! More on this in the transport layer specification.
@@ -421,7 +418,6 @@ void canardForgetLocalNodeID(CanardInstance* ins);
  * Returns the number of frames enqueued, or negative error code.
  */
 int16_t canardBroadcast(CanardInstance* ins,            ///< Library instance
-                        uint64_t data_type_signature,   ///< See above
                         uint16_t data_type_id,          ///< Refer to the specification
                         uint8_t* inout_transfer_id,     ///< Pointer to a persistent variable containing the transfer ID
                         uint8_t priority,               ///< Refer to definitions CANARD_TRANSFER_PRIORITY_*
@@ -440,9 +436,6 @@ int16_t canardBroadcast(CanardInstance* ins,            ///< Library instance
  * Sends a request or a response transfer.
  * Fails if the node is in passive mode.
  *
- * Please refer to the specification for more details about data type signatures. Signature for any data type can be
- * obtained in many ways; for example, using the command line tool distributed with Libcanard (see the repository).
- *
  * For Request transfers, the pointer to the Transfer ID should point to a persistent variable (e.g. static or heap
  * allocated, not on the stack); it will be updated by the library after every request. The Transfer ID value
  * cannot be shared between requests that have different descriptors! More on this in the transport layer
@@ -455,7 +448,6 @@ int16_t canardBroadcast(CanardInstance* ins,            ///< Library instance
  */
 int16_t canardRequestOrRespond(CanardInstance* ins,             ///< Library instance
                                uint8_t destination_node_id,     ///< Node ID of the server/client
-                               uint64_t data_type_signature,    ///< See above
                                uint8_t data_type_id,            ///< Refer to the specification
                                uint8_t* inout_transfer_id,      ///< Pointer to a persistent variable with transfer ID
                                uint8_t priority,                ///< Refer to definitions CANARD_TRANSFER_PRIORITY_*

@@ -92,7 +92,6 @@ CANARD_INTERNAL uint8_t dataLengthToDlc(uint8_t data_length);
 CANARD_INTERNAL int16_t enqueueTxFrames(CanardInstance* ins,
                                         uint32_t can_id,
                                         uint8_t* transfer_id,
-                                        uint16_t crc,
                                         const uint8_t* payload,
                                         uint16_t payload_len
 #if CANARD_MULTI_IFACE
@@ -157,8 +156,8 @@ CANARD_INTERNAL void* allocateBlock(CanardPoolAllocator* allocator);
 CANARD_INTERNAL void freeBlock(CanardPoolAllocator* allocator,
                                void* p);
 
-CANARD_INTERNAL uint16_t calculateCRC(const void* payload, 
-                                      uint16_t payload_len, 
+CANARD_INTERNAL uint16_t calculateCRC(const void* payload,
+                                      uint16_t payload_len,
                                       uint64_t data_type_signature
 #if CANARD_ENABLE_CANFD
                                       ,bool canfd

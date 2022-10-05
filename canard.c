@@ -139,7 +139,6 @@ void canardForgetLocalNodeID(CanardInstance* ins) {
 }
 
 int16_t canardBroadcast(CanardInstance* ins,
-                        uint64_t data_type_signature,
                         uint16_t data_type_id,
                         uint8_t* inout_transfer_id,
                         uint8_t priority,
@@ -163,7 +162,6 @@ int16_t canardBroadcast(CanardInstance* ins,
     }
 
     uint32_t can_id = 0;
-    uint16_t crc = 0xFFFFU;
 
     if (canardGetLocalNodeID(ins) == 0)
     {
@@ -187,14 +185,9 @@ int16_t canardBroadcast(CanardInstance* ins,
     else
     {
         can_id = ((uint32_t) priority << 24U) | ((uint32_t) data_type_id << 8U) | (uint32_t) canardGetLocalNodeID(ins);
-        crc = calculateCRC(payload, payload_len, data_type_signature
-#if CANARD_ENABLE_CANFD
-                            , canfd
-#endif
-        );
     }
 
-    const int16_t result = enqueueTxFrames(ins, can_id, inout_transfer_id, crc, payload, payload_len
+    const int16_t result = enqueueTxFrames(ins, can_id, inout_transfer_id, payload, payload_len
 #if CANARD_MULTI_IFACE
                         , iface_mask
 #endif
@@ -239,7 +232,6 @@ CANARD_INTERNAL uint16_t calculateCRC(const void* payload, uint16_t payload_len,
 
 int16_t canardRequestOrRespond(CanardInstance* ins,
                                uint8_t destination_node_id,
-                               uint64_t data_type_signature,
                                uint8_t data_type_id,
                                uint8_t* inout_transfer_id,
                                uint8_t priority,
@@ -271,14 +263,7 @@ int16_t canardRequestOrRespond(CanardInstance* ins,
                             ((uint32_t) kind << 15U) | ((uint32_t) destination_node_id << 8U) |
                             (1U << 7U) | (uint32_t) canardGetLocalNodeID(ins);
 
-    uint16_t crc = calculateCRC(payload, payload_len, data_type_signature
-#if CANARD_ENABLE_CANFD
-                        , canfd
-#endif
-    );
-
-
-    const int16_t result = enqueueTxFrames(ins, can_id, inout_transfer_id, crc, payload, payload_len
+    const int16_t result = enqueueTxFrames(ins, can_id, inout_transfer_id,  payload, payload_len
 #if CANARD_MULTI_IFACE
     , iface_mask
 #endif
@@ -675,8 +660,8 @@ int16_t canardDecodeScalar(const CanardRxTransfer* transfer,
     }
 
     /*
-     * Extending the sign bit if needed. I miss templates.
      * Note that we operate on unsigned values in order to avoid undefined behaviors.
+     * Extending the sign bit if needed. I miss templates.
      */
     if (value_is_signed && (std_byte_length * 8 != bit_length))
     {
@@ -986,7 +971,6 @@ CANARD_INTERNAL uint8_t dataLengthToDlc(uint8_t data_length) {
 CANARD_INTERNAL int16_t enqueueTxFrames(CanardInstance* ins,
                                         uint32_t can_id,
                                         uint8_t* transfer_id,
-                                        uint16_t crc,
                                         const uint8_t* payload,
                                         uint16_t payload_len
 #if CANARD_MULTI_IFACE
@@ -1056,17 +1040,6 @@ CANARD_INTERNAL int16_t enqueueTxFrames(CanardInstance* ins,
             }
 
             uint8_t i = 0;
-            if (data_index == 0)
-            {
-                // add crc
-                queue_item->frame.data[0] = (uint8_t) (crc);
-                queue_item->frame.data[1] = (uint8_t) (crc >> 8U);
-                i = 2;
-            }
-            else
-            {
-                i = 0;
-            }
 
             for (; i < (frame_max_data_len - 1) && data_index < payload_len; i++, data_index++)
             {
