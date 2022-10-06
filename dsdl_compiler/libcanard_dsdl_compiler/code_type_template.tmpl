@@ -40,7 +40,7 @@ uint32_t ${type_name}_encode_internal(${type_name}* source,
   void* msg_buf,
   uint32_t offset,
   uint8_t CANARD_MAYBE_UNUSED(root_item),
-  [[maybe_unused]] bool tao_enabled)
+  bool CANARD_MAYBE_UNUSED(tao_enabled))
 {
   %if union
     // Max Union Tag Value
@@ -159,7 +159,7 @@ uint32_t ${type_name}_encode_internal(${type_name}* source,
   * @param msg_buf : Pointer to msg storage
   * @retval returns message length as bytes
   */
-uint32_t ${type_name}_encode(${type_name}* source, void* msg_buf, bool tao_enabled)
+uint32_t ${type_name}_encode(${type_name}* source, void* msg_buf, bool CANARD_MAYBE_UNUSED(tao_enabled))
 {
     uint32_t offset = 0;
 
@@ -185,7 +185,7 @@ int32_t ${type_name}_decode_internal(
   ${type_name}* dest,
   uint8_t** CANARD_MAYBE_UNUSED(dyn_arr_buf),
   int32_t offset,
-  [[maybe_unused]] bool tao_enabled)
+  bool CANARD_MAYBE_UNUSED(tao_enabled))
 {
     int32_t ret = 0;
     %if has_array
@@ -381,7 +381,7 @@ int32_t ${type_name}_decode(const CanardRxTransfer* transfer,
   uint16_t payload_len,
   ${type_name}* dest,
   uint8_t** dyn_arr_buf,
-  bool tao_enabled)
+  bool CANARD_MAYBE_UNUSED(tao_enabled))
 {
     const int32_t offset = 0;
     int32_t ret = 0;
@@ -401,12 +401,12 @@ uint32_t ${type_name}_encode_internal(${type_name}* CANARD_MAYBE_UNUSED(source),
   void* CANARD_MAYBE_UNUSED(msg_buf),
   uint32_t offset,
   uint8_t CANARD_MAYBE_UNUSED(root_item),
-  bool tao_enabled)
+  bool CANARD_MAYBE_UNUSED(tao_enabled))
 {
     return offset;
 }
 
-uint32_t ${type_name}_encode(${type_name}* CANARD_MAYBE_UNUSED(source), void* CANARD_MAYBE_UNUSED(msg_buf), bool tao_enabled)
+uint32_t ${type_name}_encode(${type_name}* CANARD_MAYBE_UNUSED(source), void* CANARD_MAYBE_UNUSED(msg_buf), bool CANARD_MAYBE_UNUSED(tao_enabled))
 {
     return 0;
 }
@@ -416,7 +416,7 @@ int32_t ${type_name}_decode_internal(const CanardRxTransfer* CANARD_MAYBE_UNUSED
   ${type_name}* CANARD_MAYBE_UNUSED(dest),
   uint8_t** CANARD_MAYBE_UNUSED(dyn_arr_buf),
   int32_t offset,
-  bool tao_enabled)
+  bool CANARD_MAYBE_UNUSED(tao_enabled))
 {
     return offset;
 }
@@ -425,7 +425,7 @@ int32_t ${type_name}_decode(const CanardRxTransfer* CANARD_MAYBE_UNUSED(transfer
   uint16_t CANARD_MAYBE_UNUSED(payload_len),
   ${type_name}* CANARD_MAYBE_UNUSED(dest),
   uint8_t** CANARD_MAYBE_UNUSED(dyn_arr_buf),
-  bool tao_enabled)
+  bool CANARD_MAYBE_UNUSED(tao_enabled))
 {
     return 0;
 }
