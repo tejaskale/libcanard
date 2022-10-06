@@ -430,7 +430,19 @@ int16_t canardBroadcast(CanardInstance* ins,            ///< Library instance
                         ,bool canfd                      ///< Is the frame canfd
 #endif
                         );
-
+/**
+ * Calculates the CRC that can be prepended to a multi frame dronecan transfer.
+ *
+ * @param payload Pointer to the data
+ * @param payload_len Length of the payload
+ * @param data_type_signature Unique data type signature of the data type. See Dronecan specification for more details.
+ * @return
+ */
+uint16_t calculateCRC(const void *payload, uint16_t payload_len, uint64_t data_type_signature
+#if CANARD_ENABLE_CANFD
+        ,bool canfd
+#endif
+);
 
 /**
  * Sends a request or a response transfer.
