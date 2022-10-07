@@ -201,7 +201,7 @@ int16_t canardBroadcast(CanardInstance* ins,
     return result;
 }
 
-CANARD_INTERNAL uint16_t calculateCRC(const void* payload, uint16_t payload_len, uint64_t data_type_signature
+uint16_t calculateCRC(const void* payload, uint16_t payload_len, uint64_t data_type_signature
 #if CANARD_ENABLE_CANFD
                         ,bool canfd
 #endif

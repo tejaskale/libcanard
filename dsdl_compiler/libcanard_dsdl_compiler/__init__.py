@@ -268,7 +268,7 @@ def generate_one_type(template_expander, t):
     t.name_space_type_name = get_name_space_prefix(t)
     t.cpp_full_type_name = '::' + t.full_name.replace('.', '::')
     t.include_guard = '__' + t.full_name.replace('.', '_').upper()
-    t.macro_name = t.full_name.replace('.', '_').upper()
+    t.macro_name = t.full_name.replace('.', '_')
 
     # Dependencies (no duplicates)
     def fields_includes(fields):
