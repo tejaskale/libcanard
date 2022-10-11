@@ -269,10 +269,6 @@ int32_t ${type_name}_decode_internal(
                 %endif
 
     //  - Get Array
-    if (dyn_arr_buf)
-    {
-        dest->${'%s' % ((f.name + '.data'))} = (${f.cpp_type}*)*dyn_arr_buf;
-    }
 
     for (c = 0; c < dest->${'%s' % ((f.name + '.len'))}; c++)
     {
@@ -284,19 +280,16 @@ int32_t ${type_name}_decode_internal(
                                                 offset,
                                                 tao_enabled);
                     %else
-        if (dyn_arr_buf)
-        {
+
             ret = canardDecodeScalar(transfer,
                                      (uint32_t)offset,
                                      ${f.bitlen},
                                      ${f.signedness},
-                                     (void*)*dyn_arr_buf); // ${f.max_size}
+                                     (void*) (dest->${'%s' % ((f.name + '.data'))} + c)); // ${f.max_size}
             if (ret != ${f.bitlen})
             {
                 goto ${type_name}_error_exit;
             }
-            *dyn_arr_buf = (uint8_t*)(((${f.cpp_type}*)*dyn_arr_buf) + 1);
-        }
         offset += ${f.bitlen};
                     %endif
     }
