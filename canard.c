@@ -26,6 +26,7 @@
 
 #include "canard_internals.h"
 #include <string.h>
+#include <stdio.h>
 
 
 #undef MIN

@@ -63,7 +63,9 @@ extern "C" {
 
 /// By default this macro resolves to the standard assert(). The user can redefine this if necessary.
 #ifndef CANARD_ASSERT
-# define CANARD_ASSERT(x)
+# define CANARD_ASSERT(x) if(!(x)){ \
+    printf("CANARD ASSERT FAILED: %s , %d", __FILE__, __LINE__);                                  \
+}
 #endif
 
 #define CANARD_GLUE(a, b)           CANARD_GLUE_IMPL_(a, b)
@@ -256,7 +258,10 @@ typedef struct
 typedef struct CanardBufferBlock
 {
     struct CanardBufferBlock* next;
-    uint8_t *data;
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+    uint8_t data[];
+#pragma GCC diagnostic pop
 } CanardBufferBlock;
 
 /**
@@ -280,10 +285,14 @@ struct CanardRxState
 
     uint16_t payload_crc;
     uint8_t  iface_id;
-    uint8_t *buffer_head;
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+    uint8_t buffer_head[];
+#pragma GCC diagnostic pop
 };
-//CANARD_STATIC_ASSERT(offsetof(CanardRxState, buffer_head) <= 28, "Invalid memory layout");
-//CANARD_STATIC_ASSERT(CANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE >= 4, "Invalid memory layout");
+
+_Static_assert(offsetof(CanardRxState, buffer_head) <= 28, "Invalid memory layout");
+_Static_assert(CANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE >= 4, "Invalid memory layout");
 
 /**
  * This is the core structure that keeps all of the states and allocated resources of the library instance.
@@ -604,9 +613,9 @@ CANARD_STATIC_ASSERT(((uint32_t)CANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE) < 128,
                      "Platforms where sizeof(void*) > 4 are not supported. "
                      "On AMD64 use 32-bit mode (e.g. GCC flag -m32).");
 #else
-//CANARD_STATIC_ASSERT(((uint32_t)CANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE) < 32,
-//                     "Platforms where sizeof(void*) > 4 are not supported. "
-//                     "On AMD64 use 32-bit mode (e.g. GCC flag -m32).");
+_Static_assert(((uint32_t)CANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE) < 32,
+                     "Platforms where sizeof(void*) > 4 are not supported. "
+                     "On AMD64 use 32-bit mode (e.g. GCC flag -m32).");
 #endif
 
 #ifdef __cplusplus
