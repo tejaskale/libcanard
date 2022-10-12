@@ -19,7 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  *
- * Contributors: https://github.com/UAVCAN/libcanard/contributors
+ * Contributors: https://github.com/UAVCAN/canard/contributors
  *
  * Documentation: http://uavcan.org/Implementations/Libcanard
  */
@@ -61,24 +61,24 @@
 #define TOGGLE_BIT(x)                               ((bool)(((uint32_t)(x) >> 5U) & 0x1U))
 
 
-struct CanardTxQueueItem
+struct DroneCanardTxQueueItem
 {
-    CanardTxQueueItem* next;
-    CanardCANFrame frame;
+    DroneCanardTxQueueItem* next;
+    DroneCanardCANFrame frame;
 };
 
 
 /*
  * API functions
  */
-void canardInit(CanardInstance* out_ins,
+void dronecanardInit(DroneCanardInstance* out_ins,
                 void* mem_arena,
                 size_t mem_arena_size,
-                CanardOnTransferReception on_reception,
-                CanardShouldAcceptTransfer should_accept,
+                DroneCanardOnTransferReception on_reception,
+                DroneCanardShouldAcceptTransfer should_accept,
                 void* user_reference)
 {
-    CANARD_ASSERT(out_ins != NULL);
+    DRONECANARD_ASSERT(out_ins != NULL);
 
     /*
      * Checking memory layout.
@@ -86,20 +86,20 @@ void canardInit(CanardInstance* out_ins,
      * If your application fails here, make sure it's not built in 64-bit mode.
      * Refer to the design documentation for more info.
      */
-    CANARD_ASSERT(CANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE >= 6);
+    DRONECANARD_ASSERT(DRONECANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE >= 6);
 
     memset(out_ins, 0, sizeof(*out_ins));
 
-    out_ins->node_id = CANARD_BROADCAST_NODE_ID;
+    out_ins->node_id = DRONECANARD_BROADCAST_NODE_ID;
     out_ins->on_reception = on_reception;
     out_ins->should_accept = should_accept;
     out_ins->rx_states = NULL;
     out_ins->tx_queue = NULL;
     out_ins->user_reference = user_reference;
-#if CANARD_ENABLE_TAO_OPTION
+#if DRONECANARD_ENABLE_TAO_OPTION
     out_ins->tao_disabled = false;
 #endif
-    size_t pool_capacity = mem_arena_size / CANARD_MEM_BLOCK_SIZE;
+    size_t pool_capacity = mem_arena_size / DRONECANARD_MEM_BLOCK_SIZE;
     if (pool_capacity > 0xFFFFU)
     {
         pool_capacity = 0xFFFFU;
@@ -108,91 +108,91 @@ void canardInit(CanardInstance* out_ins,
     initPoolAllocator(&out_ins->allocator, mem_arena, (uint16_t)pool_capacity);
 }
 
-void* canardGetUserReference(CanardInstance* ins)
+void* dronecanardGetUserReference(DroneCanardInstance* ins)
 {
-    CANARD_ASSERT(ins != NULL);
+    DRONECANARD_ASSERT(ins != NULL);
     return ins->user_reference;
 }
 
-void canardSetLocalNodeID(CanardInstance* ins, uint8_t self_node_id)
+void dronecanardSetLocalNodeID(DroneCanardInstance* ins, uint8_t self_node_id)
 {
-    CANARD_ASSERT(ins != NULL);
+    DRONECANARD_ASSERT(ins != NULL);
 
-    if ((ins->node_id == CANARD_BROADCAST_NODE_ID) &&
-        (self_node_id >= CANARD_MIN_NODE_ID) &&
-        (self_node_id <= CANARD_MAX_NODE_ID))
+    if ((ins->node_id == DRONECANARD_BROADCAST_NODE_ID) &&
+        (self_node_id >= DRONECANARD_MIN_NODE_ID) &&
+        (self_node_id <= DRONECANARD_MAX_NODE_ID))
     {
         ins->node_id = self_node_id;
     }
     else
     {
-        CANARD_ASSERT(false);
+        DRONECANARD_ASSERT(false);
     }
 }
 
-uint8_t canardGetLocalNodeID(const CanardInstance* ins)
+uint8_t dronecanardGetLocalNodeID(const DroneCanardInstance* ins)
 {
     return ins->node_id;
 }
 
-void canardForgetLocalNodeID(CanardInstance* ins) {
-    ins->node_id = CANARD_BROADCAST_NODE_ID;
+void dronecanardForgetLocalNodeID(DroneCanardInstance* ins) {
+    ins->node_id = DRONECANARD_BROADCAST_NODE_ID;
 }
 
-int16_t canardBroadcast(CanardInstance* ins,
+int16_t dronecanardBroadcast(DroneCanardInstance* ins,
                         uint16_t data_type_id,
                         uint8_t* inout_transfer_id,
                         uint8_t priority,
                         const void* payload,
                         uint16_t payload_len
-#if CANARD_MULTI_IFACE
+#if DRONECANARD_MULTI_IFACE
                         ,uint8_t iface_mask
 #endif
-#if CANARD_ENABLE_CANFD
+#if DRONECANARD_ENABLE_CANFD
                         ,bool canfd
 #endif
 )
 {
     if (payload == NULL && payload_len > 0)
     {
-        return -CANARD_ERROR_INVALID_ARGUMENT;
+        return -DRONECANARD_ERROR_INVALID_ARGUMENT;
     }
-    if (priority > CANARD_TRANSFER_PRIORITY_LOWEST)
+    if (priority > DRONECANARD_TRANSFER_PRIORITY_LOWEST)
     {
-        return -CANARD_ERROR_INVALID_ARGUMENT;
+        return -DRONECANARD_ERROR_INVALID_ARGUMENT;
     }
 
     uint32_t can_id = 0;
 
-    if (canardGetLocalNodeID(ins) == 0)
+    if (dronecanardGetLocalNodeID(ins) == 0)
     {
         if (payload_len > 7)
         {
-            return -CANARD_ERROR_NODE_ID_NOT_SET;
+            return -DRONECANARD_ERROR_NODE_ID_NOT_SET;
         }
 
         static const uint16_t DTIDMask = (1U << ANON_MSG_DATA_TYPE_ID_BIT_LEN) - 1U;
 
         if ((data_type_id & DTIDMask) != data_type_id)
         {
-            return -CANARD_ERROR_INVALID_ARGUMENT;
+            return -DRONECANARD_ERROR_INVALID_ARGUMENT;
         }
 
         // anonymous transfer, random discriminator
         const uint16_t discriminator = (uint16_t)((crcAdd(0xFFFFU, payload, payload_len)) & 0x7FFEU);
         can_id = ((uint32_t) priority << 24U) | ((uint32_t) discriminator << 9U) |
-                 ((uint32_t) (data_type_id & DTIDMask) << 8U) | (uint32_t) canardGetLocalNodeID(ins);
+                 ((uint32_t) (data_type_id & DTIDMask) << 8U) | (uint32_t) dronecanardGetLocalNodeID(ins);
     }
     else
     {
-        can_id = ((uint32_t) priority << 24U) | ((uint32_t) data_type_id << 8U) | (uint32_t) canardGetLocalNodeID(ins);
+        can_id = ((uint32_t) priority << 24U) | ((uint32_t) data_type_id << 8U) | (uint32_t) dronecanardGetLocalNodeID(ins);
     }
 
     const int16_t result = enqueueTxFrames(ins, can_id, inout_transfer_id, payload, payload_len
-#if CANARD_MULTI_IFACE
+#if DRONECANARD_MULTI_IFACE
                         , iface_mask
 #endif
-#if CANARD_ENABLE_CANFD
+#if DRONECANARD_ENABLE_CANFD
                         , canfd
 #endif
 );
@@ -203,13 +203,13 @@ int16_t canardBroadcast(CanardInstance* ins,
 }
 
 uint16_t calculateCRC(const void* payload, uint16_t payload_len, uint64_t data_type_signature
-#if CANARD_ENABLE_CANFD
+#if DRONECANARD_ENABLE_CANFD
                         ,bool canfd
 #endif
 )
 {
     uint16_t crc = 0xFFFFU;
-#if CANARD_ENABLE_CANFD
+#if DRONECANARD_ENABLE_CANFD
     if ((payload_len > 7 && !canfd) || (payload_len > 63 && canfd))
 #else
     if (payload_len > 7)
@@ -217,7 +217,7 @@ uint16_t calculateCRC(const void* payload, uint16_t payload_len, uint64_t data_t
     {
         crc = crcAddSignature(crc, data_type_signature);
         crc = crcAdd(crc, payload, payload_len);
-#if CANARD_ENABLE_CANFD
+#if DRONECANARD_ENABLE_CANFD
         if (payload_len > 63 && canfd) {
             uint8_t empty = 0;
             uint8_t padding = dlcToDataLength(dataLengthToDlc(((payload_len+2) % 63)+1))-1;
@@ -231,49 +231,49 @@ uint16_t calculateCRC(const void* payload, uint16_t payload_len, uint64_t data_t
     return crc;
 }
 
-int16_t canardRequestOrRespond(CanardInstance* ins,
+int16_t dronecanardRequestOrRespond(DroneCanardInstance* ins,
                                uint8_t destination_node_id,
                                uint8_t data_type_id,
                                uint8_t* inout_transfer_id,
                                uint8_t priority,
-                               CanardRequestResponse kind,
+                               DroneCanardRequestResponse kind,
                                const void* payload,
                                uint16_t payload_len
-#if CANARD_MULTI_IFACE
+#if DRONECANARD_MULTI_IFACE
                                ,uint8_t iface_mask
 #endif
-#if CANARD_ENABLE_CANFD
+#if DRONECANARD_ENABLE_CANFD
                                ,bool canfd
 #endif
 )
 {
     if (payload == NULL && payload_len > 0)
     {
-        return -CANARD_ERROR_INVALID_ARGUMENT;
+        return -DRONECANARD_ERROR_INVALID_ARGUMENT;
     }
-    if (priority > CANARD_TRANSFER_PRIORITY_LOWEST)
+    if (priority > DRONECANARD_TRANSFER_PRIORITY_LOWEST)
     {
-        return -CANARD_ERROR_INVALID_ARGUMENT;
+        return -DRONECANARD_ERROR_INVALID_ARGUMENT;
     }
-    if (canardGetLocalNodeID(ins) == 0)
+    if (dronecanardGetLocalNodeID(ins) == 0)
     {
-        return -CANARD_ERROR_NODE_ID_NOT_SET;
+        return -DRONECANARD_ERROR_NODE_ID_NOT_SET;
     }
 
     const uint32_t can_id = ((uint32_t) priority << 24U) | ((uint32_t) data_type_id << 16U) |
                             ((uint32_t) kind << 15U) | ((uint32_t) destination_node_id << 8U) |
-                            (1U << 7U) | (uint32_t) canardGetLocalNodeID(ins);
+                            (1U << 7U) | (uint32_t) dronecanardGetLocalNodeID(ins);
 
     const int16_t result = enqueueTxFrames(ins, can_id, inout_transfer_id,  payload, payload_len
-#if CANARD_MULTI_IFACE
+#if DRONECANARD_MULTI_IFACE
     , iface_mask
 #endif
-#if CANARD_ENABLE_CANFD
+#if DRONECANARD_ENABLE_CANFD
                         , canfd
 #endif
 );
 
-    if (kind == CanardRequest)                      // Response Transfer ID must not be altered
+    if (kind == DroneCanardRequest)                      // Response Transfer ID must not be altered
     {
         incrementTransferID(inout_transfer_id);
     }
@@ -281,7 +281,7 @@ int16_t canardRequestOrRespond(CanardInstance* ins,
     return result;
 }
 
-const CanardCANFrame* canardPeekTxQueue(const CanardInstance* ins)
+const DroneCanardCANFrame* dronecanardPeekTxQueue(const DroneCanardInstance* ins)
 {
     if (ins->tx_queue == NULL)
     {
@@ -290,34 +290,34 @@ const CanardCANFrame* canardPeekTxQueue(const CanardInstance* ins)
     return &ins->tx_queue->frame;
 }
 
-void canardPopTxQueue(CanardInstance* ins)
+void dronecanardPopTxQueue(DroneCanardInstance* ins)
 {
-    CanardTxQueueItem* item = ins->tx_queue;
+    DroneCanardTxQueueItem* item = ins->tx_queue;
     ins->tx_queue = item->next;
     freeBlock(&ins->allocator, item);
 }
 
-int16_t canardHandleRxFrame(CanardInstance* ins, const CanardCANFrame* frame, CanardRxTransfer *out_transfer, uint64_t timestamp_usec)
+int16_t dronecanardHandleRxFrame(DroneCanardInstance* ins, const DroneCanardCANFrame* frame, DroneCanardRxTransfer *out_transfer, uint64_t timestamp_usec)
 {
-    const CanardTransferType transfer_type = extractTransferType(frame->id);
-    const uint8_t destination_node_id = (transfer_type == CanardTransferTypeBroadcast) ?
-                                        (uint8_t)CANARD_BROADCAST_NODE_ID :
+    const DroneCanardTransferType transfer_type = extractTransferType(frame->id);
+    const uint8_t destination_node_id = (transfer_type == DroneCanardTransferTypeBroadcast) ?
+                                        (uint8_t)DRONECANARD_BROADCAST_NODE_ID :
                                         DEST_ID_FROM_ID(frame->id);
 
     // TODO: This function should maintain statistics of transfer errors and such.
 
-    if ((frame->id & CANARD_CAN_FRAME_EFF) == 0 ||
-        (frame->id & CANARD_CAN_FRAME_RTR) != 0 ||
-        (frame->id & CANARD_CAN_FRAME_ERR) != 0 ||
+    if ((frame->id & DRONECANARD_CAN_FRAME_EFF) == 0 ||
+        (frame->id & DRONECANARD_CAN_FRAME_RTR) != 0 ||
+        (frame->id & DRONECANARD_CAN_FRAME_ERR) != 0 ||
         (frame->data_len < 1))
     {
-        return -CANARD_ERROR_RX_INCOMPATIBLE_PACKET;
+        return -DRONECANARD_ERROR_RX_INCOMPATIBLE_PACKET;
     }
 
-    if (transfer_type != CanardTransferTypeBroadcast &&
-        destination_node_id != canardGetLocalNodeID(ins))
+    if (transfer_type != DroneCanardTransferTypeBroadcast &&
+        destination_node_id != dronecanardGetLocalNodeID(ins))
     {
-        return -CANARD_ERROR_RX_WRONG_ADDRESS;
+        return -DRONECANARD_ERROR_RX_WRONG_ADDRESS;
     }
 
     const uint8_t priority = PRIORITY_FROM_ID(frame->id);
@@ -329,7 +329,7 @@ int16_t canardHandleRxFrame(CanardInstance* ins, const CanardCANFrame* frame, Ca
     const uint8_t tail_byte = frame->data[frame->data_len - 1];
 
     uint64_t data_type_signature = 0;
-    CanardRxState* rx_state = NULL;
+    DroneCanardRxState* rx_state = NULL;
 
     if (IS_START_OF_TRANSFER(tail_byte))
     {
@@ -340,12 +340,12 @@ int16_t canardHandleRxFrame(CanardInstance* ins, const CanardCANFrame* frame, Ca
 
             if(rx_state == NULL)
             {
-                return -CANARD_ERROR_OUT_OF_MEMORY;
+                return -DRONECANARD_ERROR_OUT_OF_MEMORY;
             }
         }
         else
         {
-            return -CANARD_ERROR_RX_NOT_WANTED;
+            return -DRONECANARD_ERROR_RX_NOT_WANTED;
         }
     }
     else
@@ -354,11 +354,11 @@ int16_t canardHandleRxFrame(CanardInstance* ins, const CanardCANFrame* frame, Ca
 
         if (rx_state == NULL)
         {
-            return -CANARD_ERROR_RX_MISSED_START;
+            return -DRONECANARD_ERROR_RX_MISSED_START;
         }
     }
 
-    CANARD_ASSERT(rx_state != NULL);    // All paths that lead to NULL should be terminated with return above
+    DRONECANARD_ASSERT(rx_state != NULL);    // All paths that lead to NULL should be terminated with return above
 
     // Resolving the state flags:
     const bool not_initialized = rx_state->timestamp_usec == 0;
@@ -385,14 +385,14 @@ int16_t canardHandleRxFrame(CanardInstance* ins, const CanardCANFrame* frame, Ca
         if (!IS_START_OF_TRANSFER(tail_byte))
         {
             rx_state->transfer_id++;
-            return -CANARD_ERROR_RX_MISSED_START;
+            return -DRONECANARD_ERROR_RX_MISSED_START;
         }
     }
 
     if (frame->iface_id != rx_state->iface_id)
     {
         // drop frame if coming from unexpected interface
-        return CANARD_OK;
+        return DRONECANARD_OK;
     }
 
     if (IS_START_OF_TRANSFER(tail_byte) && IS_END_OF_TRANSFER(tail_byte)) // single frame transfer
@@ -406,31 +406,31 @@ int16_t canardHandleRxFrame(CanardInstance* ins, const CanardCANFrame* frame, Ca
         out_transfer->transfer_id = TRANSFER_ID_FROM_TAIL_BYTE(tail_byte);
         out_transfer->priority = priority;
         out_transfer->source_node_id = source_node_id;
-#if CANARD_ENABLE_CANFD
+#if DRONECANARD_ENABLE_CANFD
         out_transfer->canfd = frame->canfd;
         out_transfer->tao = !(frame->canfd || ins->tao_disabled);
-#elif CANARD_ENABLE_TAO_OPTION
+#elif DRONECANARD_ENABLE_TAO_OPTION
         out_transfer->tao = !ins->tao_disabled;
 #endif
         prepareForNextTransfer(rx_state);
-        return CANARD_MESSAGE_COMPLETE;
+        return DRONECANARD_MESSAGE_COMPLETE;
     }
 
     if (TOGGLE_BIT(tail_byte) != rx_state->next_toggle)
     {
-        return -CANARD_ERROR_RX_WRONG_TOGGLE;
+        return -DRONECANARD_ERROR_RX_WRONG_TOGGLE;
     }
 
     if (TRANSFER_ID_FROM_TAIL_BYTE(tail_byte) != rx_state->transfer_id)
     {
-        return -CANARD_ERROR_RX_UNEXPECTED_TID;
+        return -DRONECANARD_ERROR_RX_UNEXPECTED_TID;
     }
 
     if (IS_START_OF_TRANSFER(tail_byte) && !IS_END_OF_TRANSFER(tail_byte))      // Beginning of multi frame transfer
     {
         if (frame->data_len <= 3)
         {
-            return -CANARD_ERROR_RX_SHORT_FRAME;
+            return -DRONECANARD_ERROR_RX_SHORT_FRAME;
         }
 
         // take off the crc and store the payload
@@ -441,7 +441,7 @@ int16_t canardHandleRxFrame(CanardInstance* ins, const CanardCANFrame* frame, Ca
         {
             releaseStatePayload(ins, rx_state);
             prepareForNextTransfer(rx_state);
-            return -CANARD_ERROR_OUT_OF_MEMORY;
+            return -DRONECANARD_ERROR_OUT_OF_MEMORY;
         }
         rx_state->payload_crc = (uint16_t)(((uint16_t) frame->data[0]) | (uint16_t)((uint16_t) frame->data[1] << 8U));
         rx_state->calculated_crc = crcAddSignature(0xFFFFU, data_type_signature);
@@ -456,7 +456,7 @@ int16_t canardHandleRxFrame(CanardInstance* ins, const CanardCANFrame* frame, Ca
         {
             releaseStatePayload(ins, rx_state);
             prepareForNextTransfer(rx_state);
-            return -CANARD_ERROR_OUT_OF_MEMORY;
+            return -DRONECANARD_ERROR_OUT_OF_MEMORY;
         }
         rx_state->calculated_crc = crcAdd((uint16_t)rx_state->calculated_crc,
                                           frame->data, (uint8_t)(frame->data_len - 1));
@@ -467,11 +467,11 @@ int16_t canardHandleRxFrame(CanardInstance* ins, const CanardCANFrame* frame, Ca
 
         uint8_t tail_offset = 0;
 
-        if (rx_state->payload_len < CANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE)
+        if (rx_state->payload_len < DRONECANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE)
         {
             // Copy the beginning of the frame into the head, point the tail pointer to the remainder
             for (size_t i = rx_state->payload_len;
-                 (i < CANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE) && (tail_offset < frame_payload_size);
+                 (i < DRONECANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE) && (tail_offset < frame_payload_size);
                  i++, tail_offset++)
             {
                 rx_state->buffer_head[i] = frame->data[tail_offset];
@@ -480,22 +480,22 @@ int16_t canardHandleRxFrame(CanardInstance* ins, const CanardCANFrame* frame, Ca
         else
         {
             // Like above, except that the beginning goes into the last block of the storage
-            CanardBufferBlock* block = rx_state->buffer_blocks;
+            DroneCanardBufferBlock* block = rx_state->buffer_blocks;
             if (block != NULL)          // If there's no middle, that's fine, we'll use only head and tail
             {
-                size_t offset = CANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE;    // Payload offset of the first block
+                size_t offset = DRONECANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE;    // Payload offset of the first block
                 while (block->next != NULL)
                 {
                     block = block->next;
-                    offset += CANARD_BUFFER_BLOCK_DATA_SIZE;
+                    offset += DRONECANARD_BUFFER_BLOCK_DATA_SIZE;
                 }
-                CANARD_ASSERT(block != NULL);
+                DRONECANARD_ASSERT(block != NULL);
 
                 const size_t offset_within_block = rx_state->payload_len - offset;
-                CANARD_ASSERT(offset_within_block < CANARD_BUFFER_BLOCK_DATA_SIZE);
+                DRONECANARD_ASSERT(offset_within_block < DRONECANARD_BUFFER_BLOCK_DATA_SIZE);
 
                 for (size_t i = offset_within_block;
-                     (i < CANARD_BUFFER_BLOCK_DATA_SIZE) && (tail_offset < frame_payload_size);
+                     (i < DRONECANARD_BUFFER_BLOCK_DATA_SIZE) && (tail_offset < frame_payload_size);
                      i++, tail_offset++)
                 {
                     block->data[i] = frame->data[tail_offset];
@@ -514,10 +514,10 @@ int16_t canardHandleRxFrame(CanardInstance* ins, const CanardCANFrame* frame, Ca
             out_transfer->priority = priority;
             out_transfer->source_node_id = source_node_id;
 
-#if CANARD_ENABLE_CANFD
+#if DRONECANARD_ENABLE_CANFD
             out_transfer->canfd = frame->canfd;
             out_transfer->tao = !(frame->canfd || ins->tao_disabled);
-#elif CANARD_ENABLE_TAO_OPTION
+#elif DRONECANARD_ENABLE_TAO_OPTION
             out_transfer->tao = !ins->tao_disabled;
 #endif
         rx_state->buffer_blocks = NULL;     // Block list ownership has been transferred to rx_transfer!
@@ -530,21 +530,21 @@ int16_t canardHandleRxFrame(CanardInstance* ins, const CanardCANFrame* frame, Ca
 
         if (rx_state->calculated_crc == rx_state->payload_crc)
         {
-            return CANARD_MESSAGE_COMPLETE;
+            return DRONECANARD_MESSAGE_COMPLETE;
         }
         else
         {
-            return -CANARD_ERROR_RX_BAD_CRC;
+            return -DRONECANARD_ERROR_RX_BAD_CRC;
         }
     }
 
     rx_state->next_toggle = rx_state->next_toggle ? 0 : 1;
-    return CANARD_OK;
+    return DRONECANARD_OK;
 }
 
-void canardCleanupStaleTransfers(CanardInstance* ins, uint64_t current_time_usec)
+void dronecanardCleanupStaleTransfers(DroneCanardInstance* ins, uint64_t current_time_usec)
 {
-    CanardRxState* prev = ins->rx_states, * state = ins->rx_states;
+    DroneCanardRxState* prev = ins->rx_states, * state = ins->rx_states;
 
     while (state != NULL)
     {
@@ -574,7 +574,7 @@ void canardCleanupStaleTransfers(CanardInstance* ins, uint64_t current_time_usec
     }
 }
 
-int16_t canardDecodeScalar(const CanardRxTransfer* transfer,
+int16_t dronecanardDecodeScalar(const DroneCanardRxTransfer* transfer,
                            uint32_t bit_offset,
                            uint8_t bit_length,
                            bool value_is_signed,
@@ -582,17 +582,17 @@ int16_t canardDecodeScalar(const CanardRxTransfer* transfer,
 {
     if (transfer == NULL || out_value == NULL)
     {
-        return -CANARD_ERROR_INVALID_ARGUMENT;
+        return -DRONECANARD_ERROR_INVALID_ARGUMENT;
     }
 
     if (bit_length < 1 || bit_length > 64)
     {
-        return -CANARD_ERROR_INVALID_ARGUMENT;
+        return -DRONECANARD_ERROR_INVALID_ARGUMENT;
     }
 
     if (bit_length == 1 && value_is_signed)
     {
-        return -CANARD_ERROR_INVALID_ARGUMENT;
+        return -DRONECANARD_ERROR_INVALID_ARGUMENT;
     }
 
     /*
@@ -621,7 +621,7 @@ int16_t canardDecodeScalar(const CanardRxTransfer* transfer,
         return result;
     }
 
-    CANARD_ASSERT((result > 0) && (result <= 64) && (result <= bit_length));
+    DRONECANARD_ASSERT((result > 0) && (result <= 64) && (result <= bit_length));
 
     /*
      * The bit copy algorithm assumes that more significant bits have lower index, so we need to shift some.
@@ -646,11 +646,11 @@ int16_t canardDecodeScalar(const CanardRxTransfer* transfer,
     else if (bit_length <= 64)  { std_byte_length = 8; }
     else
     {
-        CANARD_ASSERT(false);
-        return -CANARD_ERROR_INTERNAL;
+        DRONECANARD_ASSERT(false);
+        return -DRONECANARD_ERROR_INTERNAL;
     }
 
-    CANARD_ASSERT((std_byte_length > 0) && (std_byte_length <= 8));
+    DRONECANARD_ASSERT((std_byte_length > 0) && (std_byte_length <= 8));
 
     /*
      * Flipping the byte order if needed.
@@ -696,8 +696,8 @@ int16_t canardDecodeScalar(const CanardRxTransfer* transfer,
         }
         else
         {
-            CANARD_ASSERT(false);
-            return -CANARD_ERROR_INTERNAL;
+            DRONECANARD_ASSERT(false);
+            return -DRONECANARD_ERROR_INTERNAL;
         }
     }
 
@@ -712,8 +712,8 @@ int16_t canardDecodeScalar(const CanardRxTransfer* transfer,
         else if (bit_length <= 64)  { *((int64_t*) out_value) = storage.s64; }
         else
         {
-            CANARD_ASSERT(false);
-            return -CANARD_ERROR_INTERNAL;
+            DRONECANARD_ASSERT(false);
+            return -DRONECANARD_ERROR_INTERNAL;
         }
     }
     else
@@ -725,38 +725,38 @@ int16_t canardDecodeScalar(const CanardRxTransfer* transfer,
         else if (bit_length <= 64)  { *((uint64_t*) out_value) = storage.u64; }
         else
         {
-            CANARD_ASSERT(false);
-            return -CANARD_ERROR_INTERNAL;
+            DRONECANARD_ASSERT(false);
+            return -DRONECANARD_ERROR_INTERNAL;
         }
     }
 
-    CANARD_ASSERT(result <= bit_length);
-    CANARD_ASSERT(result > 0);
+    DRONECANARD_ASSERT(result <= bit_length);
+    DRONECANARD_ASSERT(result > 0);
     return result;
 }
 
-void canardEncodeScalar(void* destination,
+void dronecanardEncodeScalar(void* destination,
                         uint32_t bit_offset,
                         uint8_t bit_length,
                         const void* value)
 {
     /*
      * This function can only fail due to invalid arguments, so it was decided to make it return void,
-     * and in the case of bad arguments try the best effort or just trigger an CANARD_ASSERTion failure.
+     * and in the case of bad arguments try the best effort or just trigger an DRONECANARD_ASSERTion failure.
      * Maybe not the best solution, but it simplifies the API.
      */
-    CANARD_ASSERT(destination != NULL);
-    CANARD_ASSERT(value != NULL);
+    DRONECANARD_ASSERT(destination != NULL);
+    DRONECANARD_ASSERT(value != NULL);
 
     if (bit_length > 64)
     {
-        CANARD_ASSERT(false);
+        DRONECANARD_ASSERT(false);
         bit_length = 64;
     }
 
     if (bit_length < 1)
     {
-        CANARD_ASSERT(false);
+        DRONECANARD_ASSERT(false);
         bit_length = 1;
     }
 
@@ -785,10 +785,10 @@ void canardEncodeScalar(void* destination,
     else if (bit_length <= 64)  { std_byte_length = 8;              storage.u64 = *((uint64_t*) value); }
     else
     {
-        CANARD_ASSERT(false);
+        DRONECANARD_ASSERT(false);
     }
 
-    CANARD_ASSERT(std_byte_length > 0);
+    DRONECANARD_ASSERT(std_byte_length > 0);
 
     if (isBigEndian())
     {
@@ -814,11 +814,11 @@ void canardEncodeScalar(void* destination,
     copyBitArray(&storage.bytes[0], 0, bit_length, (uint8_t*) destination, bit_offset);
 }
 
-void canardReleaseRxTransferPayload(CanardInstance* ins, CanardRxTransfer* transfer)
+void dronecanardReleaseRxTransferPayload(DroneCanardInstance* ins, DroneCanardRxTransfer* transfer)
 {
     while (transfer->payload_middle != NULL)
     {
-        CanardBufferBlock* const temp = transfer->payload_middle->next;
+        DroneCanardBufferBlock* const temp = transfer->payload_middle->next;
         freeBlock(&ins->allocator, transfer->payload_middle);
         transfer->payload_middle = temp;
     }
@@ -829,14 +829,14 @@ void canardReleaseRxTransferPayload(CanardInstance* ins, CanardRxTransfer* trans
     transfer->payload_len = 0;
 }
 
-CanardPoolAllocatorStatistics canardGetPoolAllocatorStatistics(CanardInstance* ins)
+DroneCanardPoolAllocatorStatistics dronecanardGetPoolAllocatorStatistics(DroneCanardInstance* ins)
 {
     return ins->allocator.statistics;
 }
 
-uint16_t canardConvertNativeFloatToFloat16(float value)
+uint16_t dronecanardConvertNativeFloatToFloat16(float value)
 {
-    CANARD_ASSERT(sizeof(float) == 4);
+    DRONECANARD_ASSERT(sizeof(float) == 4);
 
     union FP32
     {
@@ -878,9 +878,9 @@ uint16_t canardConvertNativeFloatToFloat16(float value)
     return out;
 }
 
-float canardConvertFloat16ToNativeFloat(uint16_t value)
+float dronecanardConvertFloat16ToNativeFloat(uint16_t value)
 {
-    CANARD_ASSERT(sizeof(float) == 4);
+    DRONECANARD_ASSERT(sizeof(float) == 4);
 
     union FP32
     {
@@ -906,7 +906,7 @@ float canardConvertFloat16ToNativeFloat(uint16_t value)
 /*
  * Internal (static functions)
  */
-CANARD_INTERNAL int16_t computeTransferIDForwardDistance(uint8_t a, uint8_t b)
+DRONECANARD_INTERNAL int16_t computeTransferIDForwardDistance(uint8_t a, uint8_t b)
 {
     int16_t d = (int16_t)(a - b);
     if (d < 0)
@@ -916,9 +916,9 @@ CANARD_INTERNAL int16_t computeTransferIDForwardDistance(uint8_t a, uint8_t b)
     return d;
 }
 
-CANARD_INTERNAL void incrementTransferID(uint8_t* transfer_id)
+DRONECANARD_INTERNAL void incrementTransferID(uint8_t* transfer_id)
 {
-    CANARD_ASSERT(transfer_id != NULL);
+    DRONECANARD_ASSERT(transfer_id != NULL);
 
     (*transfer_id)++;
     if (*transfer_id >= 32)
@@ -927,7 +927,7 @@ CANARD_INTERNAL void incrementTransferID(uint8_t* transfer_id)
     }
 }
 
-CANARD_INTERNAL uint8_t dlcToDataLength(uint8_t dlc) {
+DRONECANARD_INTERNAL uint8_t dlcToDataLength(uint8_t dlc) {
     /*
     Data Length Code      9  10  11  12  13  14  15
     Number of data bytes 12  16  20  24  32  48  64
@@ -950,7 +950,7 @@ CANARD_INTERNAL uint8_t dlcToDataLength(uint8_t dlc) {
     return 64;
 }
 
-CANARD_INTERNAL uint8_t dataLengthToDlc(uint8_t data_length) {
+DRONECANARD_INTERNAL uint8_t dataLengthToDlc(uint8_t data_length) {
     if (data_length <= 8) {
         return data_length;
     } else if (data_length <= 12) {
@@ -969,44 +969,44 @@ CANARD_INTERNAL uint8_t dataLengthToDlc(uint8_t data_length) {
     return 15;
 }
 
-CANARD_INTERNAL int16_t enqueueTxFrames(CanardInstance* ins,
+DRONECANARD_INTERNAL int16_t enqueueTxFrames(DroneCanardInstance* ins,
                                         uint32_t can_id,
                                         uint8_t* transfer_id,
                                         const uint8_t* payload,
                                         uint16_t payload_len
-#if CANARD_MULTI_IFACE
+#if DRONECANARD_MULTI_IFACE
                                         ,uint8_t iface_mask
 #endif
-#if CANARD_ENABLE_CANFD
+#if DRONECANARD_ENABLE_CANFD
                                         ,bool canfd
 #endif
 )
 {
-    CANARD_ASSERT(ins != NULL);
-    CANARD_ASSERT((can_id & CANARD_CAN_EXT_ID_MASK) == can_id);            // Flags must be cleared
+    DRONECANARD_ASSERT(ins != NULL);
+    DRONECANARD_ASSERT((can_id & DRONECANARD_CAN_EXT_ID_MASK) == can_id);            // Flags must be cleared
 
     if (transfer_id == NULL)
     {
-        return -CANARD_ERROR_INVALID_ARGUMENT;
+        return -DRONECANARD_ERROR_INVALID_ARGUMENT;
     }
 
     if ((payload_len > 0) && (payload == NULL))
     {
-        return -CANARD_ERROR_INVALID_ARGUMENT;
+        return -DRONECANARD_ERROR_INVALID_ARGUMENT;
     }
 
     int16_t result = 0;
-#if CANARD_ENABLE_CANFD
-    uint8_t frame_max_data_len = canfd ? CANARD_CANFD_FRAME_MAX_DATA_LEN:CANARD_CAN_FRAME_MAX_DATA_LEN;
+#if DRONECANARD_ENABLE_CANFD
+    uint8_t frame_max_data_len = canfd ? DRONECANARD_CANFD_FRAME_MAX_DATA_LEN:DRONECANARD_CAN_FRAME_MAX_DATA_LEN;
 #else
-    uint8_t frame_max_data_len = CANARD_CAN_FRAME_MAX_DATA_LEN;
+    uint8_t frame_max_data_len = DRONECANARD_CAN_FRAME_MAX_DATA_LEN;
 #endif
     if (payload_len < frame_max_data_len)                        // Single frame transfer
     {
-        CanardTxQueueItem* queue_item = createTxItem(&ins->allocator);
+        DroneCanardTxQueueItem* queue_item = createTxItem(&ins->allocator);
         if (queue_item == NULL)
         {
-            return -CANARD_ERROR_OUT_OF_MEMORY;
+            return -DRONECANARD_ERROR_OUT_OF_MEMORY;
         }
 
         memcpy(queue_item->frame.data, payload, payload_len);
@@ -1014,11 +1014,11 @@ CANARD_INTERNAL int16_t enqueueTxFrames(CanardInstance* ins,
         payload_len = dlcToDataLength(dataLengthToDlc(payload_len+1))-1;
         queue_item->frame.data_len = (uint8_t)(payload_len + 1);
         queue_item->frame.data[payload_len] = (uint8_t)(0xC0U | (*transfer_id & 31U));
-        queue_item->frame.id = can_id | CANARD_CAN_FRAME_EFF;
-#if CANARD_MULTI_IFACE
+        queue_item->frame.id = can_id | DRONECANARD_CAN_FRAME_EFF;
+#if DRONECANARD_MULTI_IFACE
         queue_item->frame.iface_mask = iface_mask;
 #endif
-#if CANARD_ENABLE_CANFD
+#if DRONECANARD_ENABLE_CANFD
         queue_item->frame.canfd = canfd;
 #endif
         pushTxQueue(ins, queue_item);
@@ -1030,14 +1030,14 @@ CANARD_INTERNAL int16_t enqueueTxFrames(CanardInstance* ins,
         uint8_t toggle = 0;
         uint8_t sot_eot = 0x80;
 
-        CanardTxQueueItem* queue_item = NULL;
+        DroneCanardTxQueueItem* queue_item = NULL;
 
         while (payload_len - data_index != 0)
         {
             queue_item = createTxItem(&ins->allocator);
             if (queue_item == NULL)
             {
-                return -CANARD_ERROR_OUT_OF_MEMORY;          // TODO: Purge all frames enqueued so far
+                return -DRONECANARD_ERROR_OUT_OF_MEMORY;          // TODO: Purge all frames enqueued so far
             }
 
             uint8_t i = 0;
@@ -1051,12 +1051,12 @@ CANARD_INTERNAL int16_t enqueueTxFrames(CanardInstance* ins,
 
             i = dlcToDataLength(dataLengthToDlc(i+1))-1;
             queue_item->frame.data[i] = (uint8_t)(sot_eot | ((uint32_t)toggle << 5U) | ((uint32_t)*transfer_id & 31U));
-            queue_item->frame.id = can_id | CANARD_CAN_FRAME_EFF;
+            queue_item->frame.id = can_id | DRONECANARD_CAN_FRAME_EFF;
             queue_item->frame.data_len = (uint8_t)(i + 1);
-#if CANARD_MULTI_IFACE
+#if DRONECANARD_MULTI_IFACE
             queue_item->frame.iface_mask = iface_mask;
 #endif
-#if CANARD_ENABLE_CANFD
+#if DRONECANARD_ENABLE_CANFD
             queue_item->frame.canfd = canfd;
 #endif
             pushTxQueue(ins, queue_item);
@@ -1073,10 +1073,10 @@ CANARD_INTERNAL int16_t enqueueTxFrames(CanardInstance* ins,
 /**
  * Puts frame on on the TX queue. Higher priority placed first
  */
-CANARD_INTERNAL void pushTxQueue(CanardInstance* ins, CanardTxQueueItem* item)
+DRONECANARD_INTERNAL void pushTxQueue(DroneCanardInstance* ins, DroneCanardTxQueueItem* item)
 {
-    CANARD_ASSERT(ins != NULL);
-    CANARD_ASSERT(item->frame.data_len > 0);       // UAVCAN doesn't allow zero-payload frames
+    DRONECANARD_ASSERT(ins != NULL);
+    DRONECANARD_ASSERT(item->frame.data_len > 0);       // UAVCAN doesn't allow zero-payload frames
 
     if (ins->tx_queue == NULL)
     {
@@ -1084,8 +1084,8 @@ CANARD_INTERNAL void pushTxQueue(CanardInstance* ins, CanardTxQueueItem* item)
         return;
     }
 
-    CanardTxQueueItem* queue = ins->tx_queue;
-    CanardTxQueueItem* previous = ins->tx_queue;
+    DroneCanardTxQueueItem* queue = ins->tx_queue;
+    DroneCanardTxQueueItem* previous = ins->tx_queue;
 
     while (queue != NULL)
     {
@@ -1122,9 +1122,9 @@ CANARD_INTERNAL void pushTxQueue(CanardInstance* ins, CanardTxQueueItem* item)
 /**
  * Creates new tx queue item from allocator
  */
-CANARD_INTERNAL CanardTxQueueItem* createTxItem(CanardPoolAllocator* allocator)
+DRONECANARD_INTERNAL DroneCanardTxQueueItem* createTxItem(DroneCanardPoolAllocator* allocator)
 {
-    CanardTxQueueItem* item = (CanardTxQueueItem*) allocateBlock(allocator);
+    DroneCanardTxQueueItem* item = (DroneCanardTxQueueItem*) allocateBlock(allocator);
     if (item == NULL)
     {
         return NULL;
@@ -1136,16 +1136,16 @@ CANARD_INTERNAL CanardTxQueueItem* createTxItem(CanardPoolAllocator* allocator)
 /**
  * Returns true if priority of rhs is higher than id
  */
-CANARD_INTERNAL bool isPriorityHigher(uint32_t rhs, uint32_t id)
+DRONECANARD_INTERNAL bool isPriorityHigher(uint32_t rhs, uint32_t id)
 {
-    const uint32_t clean_id = id & CANARD_CAN_EXT_ID_MASK;
-    const uint32_t rhs_clean_id = rhs & CANARD_CAN_EXT_ID_MASK;
+    const uint32_t clean_id = id & DRONECANARD_CAN_EXT_ID_MASK;
+    const uint32_t rhs_clean_id = rhs & DRONECANARD_CAN_EXT_ID_MASK;
 
     /*
      * STD vs EXT - if 11 most significant bits are the same, EXT loses.
      */
-    const bool ext = (id & CANARD_CAN_FRAME_EFF) != 0;
-    const bool rhs_ext = (rhs & CANARD_CAN_FRAME_EFF) != 0;
+    const bool ext = (id & DRONECANARD_CAN_FRAME_EFF) != 0;
+    const bool rhs_ext = (rhs & DRONECANARD_CAN_FRAME_EFF) != 0;
     if (ext != rhs_ext)
     {
         uint32_t arb11 = ext ? (clean_id >> 18U) : clean_id;
@@ -1163,8 +1163,8 @@ CANARD_INTERNAL bool isPriorityHigher(uint32_t rhs, uint32_t id)
     /*
      * RTR vs Data frame - if frame identifiers and frame types are the same, RTR loses.
      */
-    const bool rtr = (id & CANARD_CAN_FRAME_RTR) != 0;
-    const bool rhs_rtr = (rhs & CANARD_CAN_FRAME_RTR) != 0;
+    const bool rtr = (id & DRONECANARD_CAN_FRAME_RTR) != 0;
+    const bool rhs_rtr = (rhs & DRONECANARD_CAN_FRAME_RTR) != 0;
     if (clean_id == rhs_clean_id && rtr != rhs_rtr)
     {
         return rhs_rtr;
@@ -1179,9 +1179,9 @@ CANARD_INTERNAL bool isPriorityHigher(uint32_t rhs, uint32_t id)
 /**
  * preps the rx state for the next transfer. does not delete the state
  */
-CANARD_INTERNAL void prepareForNextTransfer(CanardRxState* state)
+DRONECANARD_INTERNAL void prepareForNextTransfer(DroneCanardRxState* state)
 {
-    CANARD_ASSERT(state->buffer_blocks == NULL);
+    DRONECANARD_ASSERT(state->buffer_blocks == NULL);
     state->transfer_id++;
     state->payload_len = 0;
     state->next_toggle = 0;
@@ -1190,12 +1190,12 @@ CANARD_INTERNAL void prepareForNextTransfer(CanardRxState* state)
 /**
  * returns data type from id
  */
-CANARD_INTERNAL uint16_t extractDataType(uint32_t id)
+DRONECANARD_INTERNAL uint16_t extractDataType(uint32_t id)
 {
-    if (extractTransferType(id) == CanardTransferTypeBroadcast)
+    if (extractTransferType(id) == DroneCanardTransferTypeBroadcast)
     {
         uint16_t dtid = MSG_TYPE_FROM_ID(id);
-        if (SOURCE_ID_FROM_ID(id) == CANARD_BROADCAST_NODE_ID)
+        if (SOURCE_ID_FROM_ID(id) == DRONECANARD_BROADCAST_NODE_ID)
         {
             dtid &= (1U << ANON_MSG_DATA_TYPE_ID_BIT_LEN) - 1U;
         }
@@ -1210,36 +1210,36 @@ CANARD_INTERNAL uint16_t extractDataType(uint32_t id)
 /**
  * returns transfer type from id
  */
-CANARD_INTERNAL CanardTransferType extractTransferType(uint32_t id)
+DRONECANARD_INTERNAL DroneCanardTransferType extractTransferType(uint32_t id)
 {
     const bool is_service = SERVICE_NOT_MSG_FROM_ID(id);
     if (!is_service)
     {
-        return CanardTransferTypeBroadcast;
+        return DroneCanardTransferTypeBroadcast;
     }
     else if (REQUEST_NOT_RESPONSE_FROM_ID(id) == 1)
     {
-        return CanardTransferTypeRequest;
+        return DroneCanardTransferTypeRequest;
     }
     else
     {
-        return CanardTransferTypeResponse;
+        return DroneCanardTransferTypeResponse;
     }
 }
 
 /*
- *  CanardRxState functions
+ *  DroneCanardRxState functions
  */
 
 /**
- * Traverses the list of CanardRxState's and returns a pointer to the CanardRxState
+ * Traverses the list of DroneCanardRxState's and returns a pointer to the DroneCanardRxState
  * with either the Id or a new one at the end
  */
-CANARD_INTERNAL CanardRxState* traverseRxStates(CanardInstance* ins, uint32_t transfer_descriptor)
+DRONECANARD_INTERNAL DroneCanardRxState* traverseRxStates(DroneCanardInstance* ins, uint32_t transfer_descriptor)
 {
-    CanardRxState* states = ins->rx_states;
+    DroneCanardRxState* states = ins->rx_states;
 
-    if (states == NULL) // initialize CanardRxStates
+    if (states == NULL) // initialize DroneCanardRxStates
     {
         states = createRxState(&ins->allocator, transfer_descriptor);
 
@@ -1266,7 +1266,7 @@ CANARD_INTERNAL CanardRxState* traverseRxStates(CanardInstance* ins, uint32_t tr
 /**
  * returns pointer to the rx state of transfer descriptor or null if not found
  */
-CANARD_INTERNAL CanardRxState* findRxState(CanardRxState* state, uint32_t transfer_descriptor)
+DRONECANARD_INTERNAL DroneCanardRxState* findRxState(DroneCanardRxState* state, uint32_t transfer_descriptor)
 {
     while (state != NULL)
     {
@@ -1280,11 +1280,11 @@ CANARD_INTERNAL CanardRxState* findRxState(CanardRxState* state, uint32_t transf
 }
 
 /**
- * prepends rx state to the canard instance rx_states
+ * prepends rx state to the dronecanard instance rx_states
  */
-CANARD_INTERNAL CanardRxState* prependRxState(CanardInstance* ins, uint32_t transfer_descriptor)
+DRONECANARD_INTERNAL DroneCanardRxState* prependRxState(DroneCanardInstance* ins, uint32_t transfer_descriptor)
 {
-    CanardRxState* state = createRxState(&ins->allocator, transfer_descriptor);
+    DroneCanardRxState* state = createRxState(&ins->allocator, transfer_descriptor);
 
     if(state == NULL)
     {
@@ -1296,15 +1296,15 @@ CANARD_INTERNAL CanardRxState* prependRxState(CanardInstance* ins, uint32_t tran
     return state;
 }
 
-CANARD_INTERNAL CanardRxState* createRxState(CanardPoolAllocator* allocator, uint32_t transfer_descriptor)
+DRONECANARD_INTERNAL DroneCanardRxState* createRxState(DroneCanardPoolAllocator* allocator, uint32_t transfer_descriptor)
 {
-    CanardRxState init = {
+    DroneCanardRxState init = {
         .next = NULL,
         .buffer_blocks = NULL,
         .dtid_tt_snid_dnid = transfer_descriptor
     };
 
-    CanardRxState* state = (CanardRxState*) allocateBlock(allocator);
+    DroneCanardRxState* state = (DroneCanardRxState*) allocateBlock(allocator);
     if (state == NULL)
     {
         return NULL;
@@ -1314,37 +1314,37 @@ CANARD_INTERNAL CanardRxState* createRxState(CanardPoolAllocator* allocator, uin
     return state;
 }
 
-CANARD_INTERNAL uint64_t releaseStatePayload(CanardInstance* ins, CanardRxState* rxstate)
+DRONECANARD_INTERNAL uint64_t releaseStatePayload(DroneCanardInstance* ins, DroneCanardRxState* rxstate)
 {
     while (rxstate->buffer_blocks != NULL)
     {
-        CanardBufferBlock* const temp = rxstate->buffer_blocks->next;
+        DroneCanardBufferBlock* const temp = rxstate->buffer_blocks->next;
         freeBlock(&ins->allocator, rxstate->buffer_blocks);
         rxstate->buffer_blocks = temp;
     }
     rxstate->payload_len = 0;
-    return CANARD_OK;
+    return DRONECANARD_OK;
 }
 
 /*
- *  CanardBufferBlock functions
+ *  DroneCanardBufferBlock functions
  */
 
 /**
  * pushes data into the rx state. Fills the buffer head, then appends data to buffer blocks
  */
-CANARD_INTERNAL int16_t bufferBlockPushBytes(CanardPoolAllocator* allocator,
-                                             CanardRxState* state,
+DRONECANARD_INTERNAL int16_t bufferBlockPushBytes(DroneCanardPoolAllocator* allocator,
+                                             DroneCanardRxState* state,
                                              const uint8_t* data,
                                              uint8_t data_len)
 {
     uint16_t data_index = 0;
 
     // if head is not full, add data to head
-    if ((CANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE - state->payload_len) > 0)
+    if ((DRONECANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE - state->payload_len) > 0)
     {
         for (uint16_t i = (uint16_t)state->payload_len;
-             i < CANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE && data_index < data_len;
+             i < DRONECANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE && data_index < data_len;
              i++, data_index++)
         {
             state->buffer_head[i] = data[data_index];
@@ -1352,16 +1352,16 @@ CANARD_INTERNAL int16_t bufferBlockPushBytes(CanardPoolAllocator* allocator,
         if (data_index >= data_len)
         {
             state->payload_len =
-                (uint16_t)(state->payload_len + data_len) & ((1U << CANARD_TRANSFER_PAYLOAD_LEN_BITS) - 1U);
+                (uint16_t)(state->payload_len + data_len) & ((1U << DRONECANARD_TRANSFER_PAYLOAD_LEN_BITS) - 1U);
             return 1;
         }
     } // head is full.
 
     uint16_t index_at_nth_block =
-        (uint16_t)(((state->payload_len) - CANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE) % CANARD_BUFFER_BLOCK_DATA_SIZE);
+        (uint16_t)(((state->payload_len) - DRONECANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE) % DRONECANARD_BUFFER_BLOCK_DATA_SIZE);
 
     // get to current block
-    CanardBufferBlock* block = NULL;
+    DroneCanardBufferBlock* block = NULL;
 
     // buffer blocks uninitialized
     if (state->buffer_blocks == NULL)
@@ -1370,7 +1370,7 @@ CANARD_INTERNAL int16_t bufferBlockPushBytes(CanardPoolAllocator* allocator,
 
         if (state->buffer_blocks == NULL)
         {
-            return -CANARD_ERROR_OUT_OF_MEMORY;
+            return -DRONECANARD_ERROR_OUT_OF_MEMORY;
         }
 
         block = state->buffer_blocks;
@@ -1389,15 +1389,15 @@ CANARD_INTERNAL int16_t bufferBlockPushBytes(CanardPoolAllocator* allocator,
         }
 
         const uint16_t num_buffer_blocks =
-            (uint16_t) (((((uint32_t)state->payload_len + data_len) - CANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE) /
-                         CANARD_BUFFER_BLOCK_DATA_SIZE) + 1U);
+            (uint16_t) (((((uint32_t)state->payload_len + data_len) - DRONECANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE) /
+                         DRONECANARD_BUFFER_BLOCK_DATA_SIZE) + 1U);
 
         if (num_buffer_blocks > nth_block && index_at_nth_block == 0)
         {
             block->next = createBufferBlock(allocator);
             if (block->next == NULL)
             {
-                return -CANARD_ERROR_OUT_OF_MEMORY;
+                return -DRONECANARD_ERROR_OUT_OF_MEMORY;
             }
             block = block->next;
         }
@@ -1407,7 +1407,7 @@ CANARD_INTERNAL int16_t bufferBlockPushBytes(CanardPoolAllocator* allocator,
     while (data_index < data_len)
     {
         for (uint16_t i = index_at_nth_block;
-             i < CANARD_BUFFER_BLOCK_DATA_SIZE && data_index < data_len;
+             i < DRONECANARD_BUFFER_BLOCK_DATA_SIZE && data_index < data_len;
              i++, data_index++)
         {
             block->data[i] = data[data_index];
@@ -1418,21 +1418,21 @@ CANARD_INTERNAL int16_t bufferBlockPushBytes(CanardPoolAllocator* allocator,
             block->next = createBufferBlock(allocator);
             if (block->next == NULL)
             {
-                return -CANARD_ERROR_OUT_OF_MEMORY;
+                return -DRONECANARD_ERROR_OUT_OF_MEMORY;
             }
             block = block->next;
             index_at_nth_block = 0;
         }
     }
 
-    state->payload_len = (uint16_t)(state->payload_len + data_len) & ((1U << CANARD_TRANSFER_PAYLOAD_LEN_BITS) - 1U);
+    state->payload_len = (uint16_t)(state->payload_len + data_len) & ((1U << DRONECANARD_TRANSFER_PAYLOAD_LEN_BITS) - 1U);
 
     return 1;
 }
 
-CANARD_INTERNAL CanardBufferBlock* createBufferBlock(CanardPoolAllocator* allocator)
+DRONECANARD_INTERNAL DroneCanardBufferBlock* createBufferBlock(DroneCanardPoolAllocator* allocator)
 {
-    CanardBufferBlock* block = (CanardBufferBlock*) allocateBlock(allocator);
+    DroneCanardBufferBlock* block = (DroneCanardBufferBlock*) allocateBlock(allocator);
     if (block == NULL)
     {
         return NULL;
@@ -1447,7 +1447,7 @@ CANARD_INTERNAL CanardBufferBlock* createBufferBlock(CanardPoolAllocator* alloca
 void copyBitArray(const uint8_t* src, uint32_t src_offset, uint32_t src_len,
                         uint8_t* dst, uint32_t dst_offset)
 {
-    CANARD_ASSERT(src_len > 0U);
+    DRONECANARD_ASSERT(src_len > 0U);
 
     // Normalizing inputs
     src += src_offset / 8U;
@@ -1476,12 +1476,12 @@ void copyBitArray(const uint8_t* src, uint32_t src_offset, uint32_t src_len,
     }
 }
 
-CANARD_INTERNAL int16_t descatterTransferPayload(const CanardRxTransfer* transfer,
+DRONECANARD_INTERNAL int16_t descatterTransferPayload(const DroneCanardRxTransfer* transfer,
                                                  uint32_t bit_offset,
                                                  uint8_t bit_length,
                                                  void* output)
 {
-    CANARD_ASSERT(transfer != 0);
+    DRONECANARD_ASSERT(transfer != 0);
 
     if (bit_offset >= transfer->payload_len * 8)
     {
@@ -1493,7 +1493,7 @@ CANARD_INTERNAL int16_t descatterTransferPayload(const CanardRxTransfer* transfe
         bit_length = (uint8_t)(transfer->payload_len * 8U - bit_offset);
     }
 
-    CANARD_ASSERT(bit_length > 0);
+    DRONECANARD_ASSERT(bit_length > 0);
 
     if ((transfer->payload_middle != NULL) || (transfer->payload_tail != NULL)) // Multi frame
     {
@@ -1507,10 +1507,10 @@ CANARD_INTERNAL int16_t descatterTransferPayload(const CanardRxTransfer* transfe
         uint8_t remaining_bit_length = bit_length;
 
         // Reading head
-        if (input_bit_offset < CANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE * 8)
+        if (input_bit_offset < DRONECANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE * 8)
         {
             const uint8_t amount = (uint8_t)MIN(remaining_bit_length,
-                                                CANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE * 8U - input_bit_offset);
+                                                DRONECANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE * 8U - input_bit_offset);
 
             copyBitArray(&transfer->payload_head[0], input_bit_offset, amount, (uint8_t*) output, 0);
 
@@ -1520,14 +1520,14 @@ CANARD_INTERNAL int16_t descatterTransferPayload(const CanardRxTransfer* transfe
         }
 
         // Reading middle
-        uint32_t remaining_bits = transfer->payload_len * 8U - CANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE * 8U;
-        uint32_t block_bit_offset = CANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE * 8U;
-        const CanardBufferBlock* block = transfer->payload_middle;
+        uint32_t remaining_bits = transfer->payload_len * 8U - DRONECANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE * 8U;
+        uint32_t block_bit_offset = DRONECANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE * 8U;
+        const DroneCanardBufferBlock* block = transfer->payload_middle;
 
         while ((block != NULL) && (remaining_bit_length > 0))
         {
-            CANARD_ASSERT(remaining_bits > 0);
-            const uint32_t block_end_bit_offset = block_bit_offset + MIN(CANARD_BUFFER_BLOCK_DATA_SIZE * 8,
+            DRONECANARD_ASSERT(remaining_bits > 0);
+            const uint32_t block_end_bit_offset = block_bit_offset + MIN(DRONECANARD_BUFFER_BLOCK_DATA_SIZE * 8,
                                                                          remaining_bits);
 
             // Perform copy if we've reached the requested offset, otherwise jump over this block and try next
@@ -1535,7 +1535,7 @@ CANARD_INTERNAL int16_t descatterTransferPayload(const CanardRxTransfer* transfe
             {
                 const uint8_t amount = (uint8_t) MIN(remaining_bit_length, block_end_bit_offset - input_bit_offset);
 
-                CANARD_ASSERT(input_bit_offset >= block_bit_offset);
+                DRONECANARD_ASSERT(input_bit_offset >= block_bit_offset);
                 const uint32_t bit_offset_within_block = input_bit_offset - block_bit_offset;
 
                 copyBitArray(&block->data[0], bit_offset_within_block, amount, (uint8_t*) output, output_bit_offset);
@@ -1545,18 +1545,18 @@ CANARD_INTERNAL int16_t descatterTransferPayload(const CanardRxTransfer* transfe
                 remaining_bit_length = (uint8_t)(remaining_bit_length - amount);
             }
 
-            CANARD_ASSERT(block_end_bit_offset > block_bit_offset);
+            DRONECANARD_ASSERT(block_end_bit_offset > block_bit_offset);
             remaining_bits -= block_end_bit_offset - block_bit_offset;
             block_bit_offset = block_end_bit_offset;
             block = block->next;
         }
 
-        CANARD_ASSERT(remaining_bit_length <= remaining_bits);
+        DRONECANARD_ASSERT(remaining_bit_length <= remaining_bits);
 
         // Reading tail
         if ((transfer->payload_tail != NULL) && (remaining_bit_length > 0))
         {
-            CANARD_ASSERT(input_bit_offset >= block_bit_offset);
+            DRONECANARD_ASSERT(input_bit_offset >= block_bit_offset);
             const uint32_t offset = input_bit_offset - block_bit_offset;
 
             copyBitArray(&transfer->payload_tail[0], offset, remaining_bit_length, (uint8_t*) output,
@@ -1567,9 +1567,9 @@ CANARD_INTERNAL int16_t descatterTransferPayload(const CanardRxTransfer* transfe
             remaining_bit_length = 0;
         }
 
-        CANARD_ASSERT(input_bit_offset <= transfer->payload_len * 8);
-        CANARD_ASSERT(output_bit_offset <= 64);
-        CANARD_ASSERT(remaining_bit_length == 0);
+        DRONECANARD_ASSERT(input_bit_offset <= transfer->payload_len * 8);
+        DRONECANARD_ASSERT(output_bit_offset <= 64);
+        DRONECANARD_ASSERT(remaining_bit_length == 0);
     }
     else                                                                    // Single frame
     {
@@ -1579,7 +1579,7 @@ CANARD_INTERNAL int16_t descatterTransferPayload(const CanardRxTransfer* transfe
     return bit_length;
 }
 
-CANARD_INTERNAL bool isBigEndian(void)
+DRONECANARD_INTERNAL bool isBigEndian(void)
 {
 #if defined(BYTE_ORDER) && defined(BIG_ENDIAN)
     return BYTE_ORDER == BIG_ENDIAN;                // Some compilers offer this neat shortcut
@@ -1594,9 +1594,9 @@ CANARD_INTERNAL bool isBigEndian(void)
 #endif
 }
 
-CANARD_INTERNAL void swapByteOrder(void* data, size_t size)
+DRONECANARD_INTERNAL void swapByteOrder(void* data, size_t size)
 {
-    CANARD_ASSERT(data != NULL);
+    DRONECANARD_ASSERT(data != NULL);
 
     uint8_t* const bytes = (uint8_t*) data;
 
@@ -1616,7 +1616,7 @@ CANARD_INTERNAL void swapByteOrder(void* data, size_t size)
 /*
  * CRC functions
  */
-CANARD_INTERNAL uint16_t crcAddByte(uint16_t crc_val, uint8_t byte)
+DRONECANARD_INTERNAL uint16_t crcAddByte(uint16_t crc_val, uint8_t byte)
 {
     crc_val ^= (uint16_t) ((uint16_t) (byte) << 8U);
     for (uint8_t j = 0; j < 8; j++)
@@ -1633,7 +1633,7 @@ CANARD_INTERNAL uint16_t crcAddByte(uint16_t crc_val, uint8_t byte)
     return crc_val;
 }
 
-CANARD_INTERNAL uint16_t crcAddSignature(uint16_t crc_val, uint64_t data_type_signature)
+DRONECANARD_INTERNAL uint16_t crcAddSignature(uint16_t crc_val, uint64_t data_type_signature)
 {
     for (uint16_t shift_val = 0; shift_val < 64; shift_val = (uint16_t)(shift_val + 8U))
     {
@@ -1642,7 +1642,7 @@ CANARD_INTERNAL uint16_t crcAddSignature(uint16_t crc_val, uint64_t data_type_si
     return crc_val;
 }
 
-CANARD_INTERNAL uint16_t crcAdd(uint16_t crc_val, const uint8_t* bytes, size_t len)
+DRONECANARD_INTERNAL uint16_t crcAdd(uint16_t crc_val, const uint8_t* bytes, size_t len)
 {
     while (len--)
     {
@@ -1654,12 +1654,12 @@ CANARD_INTERNAL uint16_t crcAdd(uint16_t crc_val, const uint8_t* bytes, size_t l
 /*
  *  Pool Allocator functions
  */
-CANARD_INTERNAL void initPoolAllocator(CanardPoolAllocator* allocator,
-                                       CanardPoolAllocatorBlock* buf,
+DRONECANARD_INTERNAL void initPoolAllocator(DroneCanardPoolAllocator* allocator,
+                                       DroneCanardPoolAllocatorBlock* buf,
                                        uint16_t buf_len)
 {
     size_t current_index = 0;
-    CanardPoolAllocatorBlock** current_block = &(allocator->free_list);
+    DroneCanardPoolAllocatorBlock** current_block = &(allocator->free_list);
     while (current_index < buf_len)
     {
         *current_block = &buf[current_index];
@@ -1673,7 +1673,7 @@ CANARD_INTERNAL void initPoolAllocator(CanardPoolAllocator* allocator,
     allocator->statistics.peak_usage_blocks = 0;
 }
 
-CANARD_INTERNAL void* allocateBlock(CanardPoolAllocator* allocator)
+DRONECANARD_INTERNAL void* allocateBlock(DroneCanardPoolAllocator* allocator)
 {
     // Check if there are any blocks available in the free list.
     if (allocator->free_list == NULL)
@@ -1695,13 +1695,13 @@ CANARD_INTERNAL void* allocateBlock(CanardPoolAllocator* allocator)
     return result;
 }
 
-CANARD_INTERNAL void freeBlock(CanardPoolAllocator* allocator, void* p)
+DRONECANARD_INTERNAL void freeBlock(DroneCanardPoolAllocator* allocator, void* p)
 {
-    CanardPoolAllocatorBlock* block = (CanardPoolAllocatorBlock*) p;
+    DroneCanardPoolAllocatorBlock* block = (DroneCanardPoolAllocatorBlock*) p;
 
     block->next = allocator->free_list;
     allocator->free_list = block;
 
-    CANARD_ASSERT(allocator->statistics.current_usage_blocks > 0);
+    DRONECANARD_ASSERT(allocator->statistics.current_usage_blocks > 0);
     allocator->statistics.current_usage_blocks--;
 }

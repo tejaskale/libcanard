@@ -10,7 +10,7 @@
 #define ${t.include_guard}
 
 #include <stdint.h>
-#include "canard.h"
+#include "libdronecanard/canard.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -117,19 +117,19 @@ typedef struct
 } ${type_name};
 
 @!storage_class!@uint32_t ${type_name}_encode(${type_name}* source, void* msg_buf,  [[maybe_unused]] bool tao_enabled);
-@!storage_class!@int32_t ${type_name}_decode(const CanardRxTransfer* transfer, uint16_t payload_len, ${type_name}* dest, uint8_t** dyn_arr_buf,  [[maybe_unused]] bool tao_enabled);
+@!storage_class!@int32_t ${type_name}_decode(const DroneCanardRxTransfer* transfer, uint16_t payload_len, ${type_name}* dest, uint8_t** dyn_arr_buf,  [[maybe_unused]] bool tao_enabled);
 
 @!storage_class!@uint32_t ${type_name}_encode_internal(${type_name}* source, void* msg_buf, uint32_t offset, uint8_t root_item,  [[maybe_unused]] bool tao_enabled);
-@!storage_class!@int32_t ${type_name}_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, ${type_name}* dest, uint8_t** dyn_arr_buf, int32_t offset,  [[maybe_unused]] bool tao_enabled);
+@!storage_class!@int32_t ${type_name}_decode_internal(const DroneCanardRxTransfer* transfer, uint16_t payload_len, ${type_name}* dest, uint8_t** dyn_arr_buf, int32_t offset,  [[maybe_unused]] bool tao_enabled);
  %else
 typedef struct
 {
     uint8_t empty;
 } ${type_name};
 @!storage_class!@uint32_t ${type_name}_encode(${type_name}* source, void* msg_buf,  [[maybe_unused]] bool tao_enabled);
-@!storage_class!@int32_t ${type_name}_decode(const CanardRxTransfer* transfer, uint16_t payload_len, ${type_name}* dest, uint8_t** dyn_arr_buf,  [[maybe_unused]] bool tao_enabled);
+@!storage_class!@int32_t ${type_name}_decode(const DroneCanardRxTransfer* transfer, uint16_t payload_len, ${type_name}* dest, uint8_t** dyn_arr_buf,  [[maybe_unused]] bool tao_enabled);
 @!storage_class!@uint32_t ${type_name}_encode_internal(${type_name}* source, void* msg_buf, uint32_t offset, uint8_t root_item,  [[maybe_unused]] bool tao_enabled);
-@!storage_class!@int32_t ${type_name}_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, ${type_name}* dest, uint8_t** dyn_arr_buf, int32_t offset,  [[maybe_unused]] bool tao_enabled);
+@!storage_class!@int32_t ${type_name}_decode_internal(const DroneCanardRxTransfer* transfer, uint16_t payload_len, ${type_name}* dest, uint8_t** dyn_arr_buf, int32_t offset,  [[maybe_unused]] bool tao_enabled);
 
  %endif
 <!--(end)-->

@@ -29,8 +29,8 @@
  * It is NOT part of the library's API and should not even be looked at by the user.
  */
 
-#ifndef CANARD_INTERNALS_H
-#define CANARD_INTERNALS_H
+#ifndef DRONECANARD_INTERNALS_H
+#define DRONECANARD_INTERNALS_H
 
 #include "canard.h"
 
@@ -39,70 +39,70 @@ extern "C" {
 #endif
 
 /// This macro is needed only for testing and development. Do not redefine this in production.
-#ifndef CANARD_INTERNAL
-# define CANARD_INTERNAL static
+#ifndef DRONECANARD_INTERNAL
+# define DRONECANARD_INTERNAL static
 #endif
 
 
-CANARD_INTERNAL CanardRxState* traverseRxStates(CanardInstance* ins,
+DRONECANARD_INTERNAL DroneCanardRxState* traverseRxStates(DroneCanardInstance* ins,
                                                 uint32_t transfer_descriptor);
 
-CANARD_INTERNAL CanardRxState* createRxState(CanardPoolAllocator* allocator,
+DRONECANARD_INTERNAL DroneCanardRxState* createRxState(DroneCanardPoolAllocator* allocator,
                                              uint32_t transfer_descriptor);
 
-CANARD_INTERNAL CanardRxState* prependRxState(CanardInstance* ins,
+DRONECANARD_INTERNAL DroneCanardRxState* prependRxState(DroneCanardInstance* ins,
                                               uint32_t transfer_descriptor);
 
-CANARD_INTERNAL CanardRxState* findRxState(CanardRxState* state,
+DRONECANARD_INTERNAL DroneCanardRxState* findRxState(DroneCanardRxState* state,
                                            uint32_t transfer_descriptor);
 
-CANARD_INTERNAL int16_t bufferBlockPushBytes(CanardPoolAllocator* allocator,
-                                             CanardRxState* state,
+DRONECANARD_INTERNAL int16_t bufferBlockPushBytes(DroneCanardPoolAllocator* allocator,
+                                             DroneCanardRxState* state,
                                              const uint8_t* data,
                                              uint8_t data_len);
 
-CANARD_INTERNAL CanardBufferBlock* createBufferBlock(CanardPoolAllocator* allocator);
+DRONECANARD_INTERNAL DroneCanardBufferBlock* createBufferBlock(DroneCanardPoolAllocator* allocator);
 
-CANARD_INTERNAL CanardTransferType extractTransferType(uint32_t id);
+DRONECANARD_INTERNAL DroneCanardTransferType extractTransferType(uint32_t id);
 
-CANARD_INTERNAL uint16_t extractDataType(uint32_t id);
+DRONECANARD_INTERNAL uint16_t extractDataType(uint32_t id);
 
-CANARD_INTERNAL void pushTxQueue(CanardInstance* ins,
-                                 CanardTxQueueItem* item);
+DRONECANARD_INTERNAL void pushTxQueue(DroneCanardInstance* ins,
+                                 DroneCanardTxQueueItem* item);
 
-CANARD_INTERNAL bool isPriorityHigher(uint32_t id,
+DRONECANARD_INTERNAL bool isPriorityHigher(uint32_t id,
                                       uint32_t rhs);
 
-CANARD_INTERNAL CanardTxQueueItem* createTxItem(CanardPoolAllocator* allocator);
+DRONECANARD_INTERNAL DroneCanardTxQueueItem* createTxItem(DroneCanardPoolAllocator* allocator);
 
-CANARD_INTERNAL void prepareForNextTransfer(CanardRxState* state);
+DRONECANARD_INTERNAL void prepareForNextTransfer(DroneCanardRxState* state);
 
-CANARD_INTERNAL int16_t computeTransferIDForwardDistance(uint8_t a,
+DRONECANARD_INTERNAL int16_t computeTransferIDForwardDistance(uint8_t a,
                                                          uint8_t b);
 
-CANARD_INTERNAL void incrementTransferID(uint8_t* transfer_id);
+DRONECANARD_INTERNAL void incrementTransferID(uint8_t* transfer_id);
 
-CANARD_INTERNAL uint64_t releaseStatePayload(CanardInstance* ins,
-                                             CanardRxState* rxstate);
+DRONECANARD_INTERNAL uint64_t releaseStatePayload(DroneCanardInstance* ins,
+                                             DroneCanardRxState* rxstate);
 
-CANARD_INTERNAL uint8_t dlcToDataLength(uint8_t dlc);
-CANARD_INTERNAL uint8_t dataLengthToDlc(uint8_t data_length);
+DRONECANARD_INTERNAL uint8_t dlcToDataLength(uint8_t dlc);
+DRONECANARD_INTERNAL uint8_t dataLengthToDlc(uint8_t data_length);
 
 /// Returns the number of frames enqueued
-CANARD_INTERNAL int16_t enqueueTxFrames(CanardInstance* ins,
+DRONECANARD_INTERNAL int16_t enqueueTxFrames(DroneCanardInstance* ins,
                                         uint32_t can_id,
                                         uint8_t* transfer_id,
                                         const uint8_t* payload,
                                         uint16_t payload_len
-#if CANARD_MULTI_IFACE
+#if DRONECANARD_MULTI_IFACE
                                         ,uint8_t iface_mask
 #endif
-#if CANARD_ENABLE_CANFD
+#if DRONECANARD_ENABLE_CANFD
                                         ,bool canfd
 #endif
                                         );
 
-CANARD_INTERNAL void copyBitArray(const uint8_t* src,
+DRONECANARD_INTERNAL void copyBitArray(const uint8_t* src,
                                   uint32_t src_offset,
                                   uint32_t src_len,
                                   uint8_t* dst,
@@ -112,25 +112,25 @@ CANARD_INTERNAL void copyBitArray(const uint8_t* src,
  * Moves specified bits from the scattered transfer storage to a specified contiguous buffer.
  * Returns the number of bits copied, or negated error code.
  */
-CANARD_INTERNAL int16_t descatterTransferPayload(const CanardRxTransfer* transfer,
+DRONECANARD_INTERNAL int16_t descatterTransferPayload(const DroneCanardRxTransfer* transfer,
                                                  uint32_t bit_offset,
                                                  uint8_t bit_length,
                                                  void* output);
 
-CANARD_INTERNAL bool isBigEndian(void);
+DRONECANARD_INTERNAL bool isBigEndian(void);
 
-CANARD_INTERNAL void swapByteOrder(void* data, unsigned size);
+DRONECANARD_INTERNAL void swapByteOrder(void* data, unsigned size);
 
 /*
  * Transfer CRC
  */
-CANARD_INTERNAL uint16_t crcAddByte(uint16_t crc_val,
+DRONECANARD_INTERNAL uint16_t crcAddByte(uint16_t crc_val,
                                     uint8_t byte);
 
-CANARD_INTERNAL uint16_t crcAddSignature(uint16_t crc_val,
+DRONECANARD_INTERNAL uint16_t crcAddSignature(uint16_t crc_val,
                                          uint64_t data_type_signature);
 
-CANARD_INTERNAL uint16_t crcAdd(uint16_t crc_val,
+DRONECANARD_INTERNAL uint16_t crcAdd(uint16_t crc_val,
                                 const uint8_t* bytes,
                                 size_t len);
 
@@ -141,19 +141,19 @@ CANARD_INTERNAL uint16_t crcAdd(uint16_t crc_val,
  * @param [in] buf The buffer used by the memory allocator.
  * @param [in] buf_len The number of blocks in buf.
  */
-CANARD_INTERNAL void initPoolAllocator(CanardPoolAllocator* allocator,
-                                       CanardPoolAllocatorBlock* buf,
+DRONECANARD_INTERNAL void initPoolAllocator(DroneCanardPoolAllocator* allocator,
+                                       DroneCanardPoolAllocatorBlock* buf,
                                        uint16_t buf_len);
 
 /**
  * Allocates a block from the given pool allocator.
  */
-CANARD_INTERNAL void* allocateBlock(CanardPoolAllocator* allocator);
+DRONECANARD_INTERNAL void* allocateBlock(DroneCanardPoolAllocator* allocator);
 
 /**
  * Frees a memory block previously returned by canardAllocateBlock.
  */
-CANARD_INTERNAL void freeBlock(CanardPoolAllocator* allocator,
+DRONECANARD_INTERNAL void freeBlock(DroneCanardPoolAllocator* allocator,
                                void* p);
 
 #ifdef __cplusplus

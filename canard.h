@@ -19,128 +19,128 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  *
- * Contributors: https://github.com/UAVCAN/libcanard/contributors
+ * Contributors: https://github.com/UAVCAN/libdronecanard/contributors
  *
- * Documentation: http://uavcan.org/Implementations/Libcanard
+ * Documentation: http://uavcan.org/Implementations/Libdronecanard
  */
 
-#ifndef CANARD_H
-#define CANARD_H
+#ifndef DRONECANARD_H
+#define DRONECANARD_H
 
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
 
 /// Build configuration header. Use it to provide your overrides.
-#if defined(CANARD_ENABLE_CUSTOM_BUILD_CONFIG) && CANARD_ENABLE_CUSTOM_BUILD_CONFIG
-# include "canard_build_config.h"
+#if defined(DRONECANARD_ENABLE_CUSTOM_BUILD_CONFIG) && DRONECANARD_ENABLE_CUSTOM_BUILD_CONFIG
+# include "dronecanard_build_config.h"
 #endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/// Libcanard version. API will be backwards compatible within the same major version.
-#define CANARD_VERSION_MAJOR                        0
-#define CANARD_VERSION_MINOR                        2
+/// Libdronecanard version. API will be backwards compatible within the same major version.
+#define DRONECANARD_VERSION_MAJOR                        0
+#define DRONECANARD_VERSION_MINOR                        2
 
 
-#ifndef CANARD_ENABLE_CANFD
-#define CANARD_ENABLE_CANFD                         0
+#ifndef DRONECANARD_ENABLE_CANFD
+#define DRONECANARD_ENABLE_CANFD                         0
 #endif
 
-#ifndef CANARD_MULTI_IFACE
-#define CANARD_MULTI_IFACE                          0
+#ifndef DRONECANARD_MULTI_IFACE
+#define DRONECANARD_MULTI_IFACE                          0
 #endif
 
-#ifndef CANARD_ENABLE_TAO_OPTION
-#if CANARD_ENABLE_CANFD
-#define CANARD_ENABLE_TAO_OPTION                    1
+#ifndef DRONECANARD_ENABLE_TAO_OPTION
+#if DRONECANARD_ENABLE_CANFD
+#define DRONECANARD_ENABLE_TAO_OPTION                    1
 #else
-#define CANARD_ENABLE_TAO_OPTION                    0
+#define DRONECANARD_ENABLE_TAO_OPTION                    0
 #endif
 #endif
 
 /// By default this macro resolves to the standard assert(). The user can redefine this if necessary.
-#ifndef CANARD_ASSERT
-# define CANARD_ASSERT(x) if(!(x)){ \
-    printf("CANARD ASSERT FAILED: %s , %d", __FILE__, __LINE__);                                  \
+#ifndef DRONECANARD_ASSERT
+# define DRONECANARD_ASSERT(x) if(!(x)){ \
+    printf("DRONECANARD ASSERT FAILED: %s , %d", __FILE__, __LINE__);                                  \
 }
 #endif
 
-#define CANARD_GLUE(a, b)           CANARD_GLUE_IMPL_(a, b)
-#define CANARD_GLUE_IMPL_(a, b)     a##b
+#define DRONECANARD_GLUE(a, b)           DRONECANARD_GLUE_IMPL_(a, b)
+#define DRONECANARD_GLUE_IMPL_(a, b)     a##b
 
 /// By default this macro expands to static_assert if supported by the language (C11, C++11, or newer).
 /// The user can redefine this if necessary.
-#ifndef CANARD_STATIC_ASSERT
+#ifndef DRONECANARD_STATIC_ASSERT
 # if (defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)) ||\
      (defined(__cplusplus) && (__cplusplus >= 201103L))
-#  define CANARD_STATIC_ASSERT static_assert
+#  define DRONECANARD_STATIC_ASSERT static_assert
 # else
-#  define CANARD_STATIC_ASSERT(x, ...) typedef char CANARD_GLUE(_static_assertion_, __LINE__)[(x) ? 1 : -1]
+#  define DRONECANARD_STATIC_ASSERT(x, ...) typedef char DRONECANARD_GLUE(_static_assertion_, __LINE__)[(x) ? 1 : -1]
 # endif
 #endif
 
 /// Error code definitions; inverse of these values may be returned from API calls.
-#define CANARD_OK                                      0
+#define DRONECANARD_OK                                      0
 // Value 1 is omitted intentionally, since -1 is often used in 3rd party code
-#define CANARD_ERROR_INVALID_ARGUMENT                  2
-#define CANARD_ERROR_OUT_OF_MEMORY                     3
-#define CANARD_ERROR_NODE_ID_NOT_SET                   4
-#define CANARD_ERROR_INTERNAL                          9
-#define CANARD_ERROR_RX_INCOMPATIBLE_PACKET            10
-#define CANARD_ERROR_RX_WRONG_ADDRESS                  11
-#define CANARD_ERROR_RX_NOT_WANTED                     12
-#define CANARD_ERROR_RX_MISSED_START                   13
-#define CANARD_ERROR_RX_WRONG_TOGGLE                   14
-#define CANARD_ERROR_RX_UNEXPECTED_TID                 15
-#define CANARD_ERROR_RX_SHORT_FRAME                    16
-#define CANARD_ERROR_RX_BAD_CRC                        17
-#define CANARD_MESSAGE_COMPLETE                        18
+#define DRONECANARD_ERROR_INVALID_ARGUMENT                  2
+#define DRONECANARD_ERROR_OUT_OF_MEMORY                     3
+#define DRONECANARD_ERROR_NODE_ID_NOT_SET                   4
+#define DRONECANARD_ERROR_INTERNAL                          9
+#define DRONECANARD_ERROR_RX_INCOMPATIBLE_PACKET            10
+#define DRONECANARD_ERROR_RX_WRONG_ADDRESS                  11
+#define DRONECANARD_ERROR_RX_NOT_WANTED                     12
+#define DRONECANARD_ERROR_RX_MISSED_START                   13
+#define DRONECANARD_ERROR_RX_WRONG_TOGGLE                   14
+#define DRONECANARD_ERROR_RX_UNEXPECTED_TID                 15
+#define DRONECANARD_ERROR_RX_SHORT_FRAME                    16
+#define DRONECANARD_ERROR_RX_BAD_CRC                        17
+#define DRONECANARD_MESSAGE_COMPLETE                        18
 
 /// The size of a memory block in bytes.
-#if CANARD_ENABLE_CANFD
-#define CANARD_MEM_BLOCK_SIZE                       128U
+#if DRONECANARD_ENABLE_CANFD
+#define DRONECANARD_MEM_BLOCK_SIZE                       128U
 #else
-#define CANARD_MEM_BLOCK_SIZE                       32U
+#define DRONECANARD_MEM_BLOCK_SIZE                       32U
 #endif
 
-#define CANARD_CAN_FRAME_MAX_DATA_LEN               8U
-#if CANARD_ENABLE_CANFD
-#define CANARD_CANFD_FRAME_MAX_DATA_LEN             64U
+#define DRONECANARD_CAN_FRAME_MAX_DATA_LEN               8U
+#if DRONECANARD_ENABLE_CANFD
+#define DRONECANARD_CANFD_FRAME_MAX_DATA_LEN             64U
 #endif
 
 /// Node ID values. Refer to the specification for more info.
-#define CANARD_BROADCAST_NODE_ID                    0
-#define CANARD_MIN_NODE_ID                          1
-#define CANARD_MAX_NODE_ID                          127
+#define DRONECANARD_BROADCAST_NODE_ID                    0
+#define DRONECANARD_MIN_NODE_ID                          1
+#define DRONECANARD_MAX_NODE_ID                          127
 
-/// Refer to the type CanardRxTransfer
-#define CANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE      (CANARD_MEM_BLOCK_SIZE - offsetof(CanardRxState, buffer_head))
+/// Refer to the type DroneCanardRxTransfer
+#define DRONECANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE      (DRONECANARD_MEM_BLOCK_SIZE - offsetof(DroneCanardRxState, buffer_head))
 
-/// Refer to the type CanardBufferBlock
-#define CANARD_BUFFER_BLOCK_DATA_SIZE               (CANARD_MEM_BLOCK_SIZE - offsetof(CanardBufferBlock, data))
+/// Refer to the type DroneCanardBufferBlock
+#define DRONECANARD_BUFFER_BLOCK_DATA_SIZE               (DRONECANARD_MEM_BLOCK_SIZE - offsetof(DroneCanardBufferBlock, data))
 
-/// Refer to canardCleanupStaleTransfers() for details.
-#define CANARD_RECOMMENDED_STALE_TRANSFER_CLEANUP_INTERVAL_USEC     1000000U
+/// Refer to dronecanardCleanupStaleTransfers() for details.
+#define DRONECANARD_RECOMMENDED_STALE_TRANSFER_CLEANUP_INTERVAL_USEC     1000000U
 
 /// Transfer priority definitions
-#define CANARD_TRANSFER_PRIORITY_HIGHEST            0
-#define CANARD_TRANSFER_PRIORITY_HIGH               8
-#define CANARD_TRANSFER_PRIORITY_MEDIUM             16
-#define CANARD_TRANSFER_PRIORITY_LOW                24
-#define CANARD_TRANSFER_PRIORITY_LOWEST             31
+#define DRONECANARD_TRANSFER_PRIORITY_HIGHEST            0
+#define DRONECANARD_TRANSFER_PRIORITY_HIGH               8
+#define DRONECANARD_TRANSFER_PRIORITY_MEDIUM             16
+#define DRONECANARD_TRANSFER_PRIORITY_LOW                24
+#define DRONECANARD_TRANSFER_PRIORITY_LOWEST             31
 
-/// Related to CanardCANFrame
-#define CANARD_CAN_EXT_ID_MASK                      0x1FFFFFFFU
-#define CANARD_CAN_STD_ID_MASK                      0x000007FFU
-#define CANARD_CAN_FRAME_EFF                        (1UL << 31U)         ///< Extended frame format
-#define CANARD_CAN_FRAME_RTR                        (1UL << 30U)         ///< Remote transmission (not used by UAVCAN)
-#define CANARD_CAN_FRAME_ERR                        (1UL << 29U)         ///< Error frame (not used by UAVCAN)
+/// Related to DroneCanardCANFrame
+#define DRONECANARD_CAN_EXT_ID_MASK                      0x1FFFFFFFU
+#define DRONECANARD_CAN_STD_ID_MASK                      0x000007FFU
+#define DRONECANARD_CAN_FRAME_EFF                        (1UL << 31U)         ///< Extended frame format
+#define DRONECANARD_CAN_FRAME_RTR                        (1UL << 30U)         ///< Remote transmission (not used by UAVCAN)
+#define DRONECANARD_CAN_FRAME_ERR                        (1UL << 29U)         ///< Error frame (not used by UAVCAN)
 
-#define CANARD_TRANSFER_PAYLOAD_LEN_BITS            10U
-#define CANARD_MAX_TRANSFER_PAYLOAD_LEN             ((1U << CANARD_TRANSFER_PAYLOAD_LEN_BITS) - 1U)
+#define DRONECANARD_TRANSFER_PAYLOAD_LEN_BITS            10U
+#define DRONECANARD_MAX_TRANSFER_PAYLOAD_LEN             ((1U << DRONECANARD_TRANSFER_PAYLOAD_LEN_BITS) - 1U)
 
 
 /**
@@ -150,52 +150,52 @@ typedef struct
 {
     /**
      * Refer to the following definitions:
-     *  - CANARD_CAN_FRAME_EFF
-     *  - CANARD_CAN_FRAME_RTR
-     *  - CANARD_CAN_FRAME_ERR
+     *  - DRONECANARD_CAN_FRAME_EFF
+     *  - DRONECANARD_CAN_FRAME_RTR
+     *  - DRONECANARD_CAN_FRAME_ERR
      */
     uint32_t id;
-#if CANARD_ENABLE_CANFD
-    uint8_t data[CANARD_CANFD_FRAME_MAX_DATA_LEN];
+#if DRONECANARD_ENABLE_CANFD
+    uint8_t data[DRONECANARD_CANFD_FRAME_MAX_DATA_LEN];
 #else
-    uint8_t data[CANARD_CAN_FRAME_MAX_DATA_LEN];
+    uint8_t data[DRONECANARD_CAN_FRAME_MAX_DATA_LEN];
 #endif
     uint8_t data_len;
     uint8_t iface_id;
-#if CANARD_MULTI_IFACE
+#if DRONECANARD_MULTI_IFACE
     uint8_t iface_mask;
 #endif
-#if CANARD_ENABLE_CANFD
+#if DRONECANARD_ENABLE_CANFD
     bool canfd;
 #endif
-} CanardCANFrame;
+} DroneCanardCANFrame;
 
 /**
  * Transfer types are defined by the UAVCAN specification.
  */
 typedef enum
 {
-    CanardTransferTypeResponse  = 0,
-    CanardTransferTypeRequest   = 1,
-    CanardTransferTypeBroadcast = 2
-} CanardTransferType;
+    DroneCanardTransferTypeResponse  = 0,
+    DroneCanardTransferTypeRequest   = 1,
+    DroneCanardTransferTypeBroadcast = 2
+} DroneCanardTransferType;
 
 /**
  * Types of service transfers. These are not applicable to message transfers.
  */
 typedef enum
 {
-    CanardResponse,
-    CanardRequest
-} CanardRequestResponse;
+    DroneCanardResponse,
+    DroneCanardRequest
+} DroneCanardRequestResponse;
 
 /*
  * Forward declarations.
  */
-typedef struct CanardInstance CanardInstance;
-typedef struct CanardRxTransfer CanardRxTransfer;
-typedef struct CanardRxState CanardRxState;
-typedef struct CanardTxQueueItem CanardTxQueueItem;
+typedef struct DroneCanardInstance DroneCanardInstance;
+typedef struct DroneCanardRxTransfer DroneCanardRxTransfer;
+typedef struct DroneCanardRxState DroneCanardRxState;
+typedef struct DroneCanardTxQueueItem DroneCanardTxQueueItem;
 
 /**
  * The application must implement this function and supply a pointer to it to the library during initialization.
@@ -204,32 +204,32 @@ typedef struct CanardTxQueueItem CanardTxQueueItem;
  * If the application returns true, the value pointed to by 'out_data_type_signature' must be initialized with the
  * correct data type signature, otherwise transfer reception will fail with CRC mismatch error. Please refer to the
  * specification for more details about data type signatures. Signature for any data type can be obtained in many
- * ways; for example, using the command line tool distributed with Libcanard (see the repository).
+ * ways; for example, using the command line tool distributed with Libdronecanard (see the repository).
  */
-typedef bool (* CanardShouldAcceptTransfer)(const CanardInstance* ins,          ///< Library instance
+typedef bool (* DroneCanardShouldAcceptTransfer)(const DroneCanardInstance* ins,          ///< Library instance
                                             uint64_t* out_data_type_signature,  ///< Must be set by the application!
                                             uint16_t data_type_id,              ///< Refer to the specification
-                                            CanardTransferType transfer_type,   ///< Refer to CanardTransferType
+                                            DroneCanardTransferType transfer_type,   ///< Refer to DroneCanardTransferType
                                             uint8_t source_node_id);            ///< Source node ID or Broadcast (0)
 
 /**
  * This function will be invoked by the library every time a transfer is successfully received.
  * If the application needs to send another transfer from this callback, it is highly recommended
- * to call canardReleaseRxTransferPayload() first, so that the memory that was used for the block
+ * to call dronecanardReleaseRxTransferPayload() first, so that the memory that was used for the block
  * buffer can be released and re-used by the TX queue.
  */
-typedef void (* CanardOnTransferReception)(CanardInstance* ins,                 ///< Library instance
-                                           CanardRxTransfer* transfer);         ///< Ptr to temporary transfer object
+typedef void (* DroneCanardOnTransferReception)(DroneCanardInstance* ins,                 ///< Library instance
+                                           DroneCanardRxTransfer* transfer);         ///< Ptr to temporary transfer object
 
 /**
  * INTERNAL DEFINITION, DO NOT USE DIRECTLY.
  * A memory block used in the memory block allocator.
  */
-typedef union CanardPoolAllocatorBlock_u
+typedef union DroneCanardPoolAllocatorBlock_u
 {
-    char bytes[CANARD_MEM_BLOCK_SIZE];
-    union CanardPoolAllocatorBlock_u* next;
-} CanardPoolAllocatorBlock;
+    char bytes[DRONECANARD_MEM_BLOCK_SIZE];
+    union DroneCanardPoolAllocatorBlock_u* next;
+} DroneCanardPoolAllocatorBlock;
 
 /**
  * This structure provides usage statistics of the memory pool allocator.
@@ -240,38 +240,38 @@ typedef struct
     uint16_t capacity_blocks;               ///< Pool capacity in number of blocks
     uint16_t current_usage_blocks;          ///< Number of blocks that are currently allocated by the library
     uint16_t peak_usage_blocks;             ///< Maximum number of blocks used since initialization
-} CanardPoolAllocatorStatistics;
+} DroneCanardPoolAllocatorStatistics;
 
 /**
  * INTERNAL DEFINITION, DO NOT USE DIRECTLY.
  */
 typedef struct
 {
-    CanardPoolAllocatorBlock* free_list;
-    CanardPoolAllocatorStatistics statistics;
-} CanardPoolAllocator;
+    DroneCanardPoolAllocatorBlock* free_list;
+    DroneCanardPoolAllocatorStatistics statistics;
+} DroneCanardPoolAllocator;
 
 /**
  * INTERNAL DEFINITION, DO NOT USE DIRECTLY.
  * Buffer block for received data.
  */
-typedef struct CanardBufferBlock
+typedef struct DroneCanardBufferBlock
 {
-    struct CanardBufferBlock* next;
+    struct DroneCanardBufferBlock* next;
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpedantic"
     uint8_t data[];
 #pragma GCC diagnostic pop
-} CanardBufferBlock;
+} DroneCanardBufferBlock;
 
 /**
  * INTERNAL DEFINITION, DO NOT USE DIRECTLY.
  */
-struct CanardRxState
+struct DroneCanardRxState
 {
-    struct CanardRxState* next;
+    struct DroneCanardRxState* next;
 
-    CanardBufferBlock* buffer_blocks;
+    DroneCanardBufferBlock* buffer_blocks;
 
     uint64_t timestamp_usec;
 
@@ -279,7 +279,7 @@ struct CanardRxState
 
     // We're using plain 'unsigned' here, because C99 doesn't permit explicit field type specification
     unsigned calculated_crc : 16;
-    unsigned payload_len    : CANARD_TRANSFER_PAYLOAD_LEN_BITS;
+    unsigned payload_len    : DRONECANARD_TRANSFER_PAYLOAD_LEN_BITS;
     unsigned transfer_id    : 5;
     unsigned next_toggle    : 1;    // 16+10+5+1 = 32, aligned.
 
@@ -291,28 +291,28 @@ struct CanardRxState
 #pragma GCC diagnostic pop
 };
 
-_Static_assert(offsetof(CanardRxState, buffer_head) <= 28, "Invalid memory layout");
-_Static_assert(CANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE >= 4, "Invalid memory layout");
+_Static_assert(offsetof(DroneCanardRxState, buffer_head) <= 28, "Invalid memory layout");
+_Static_assert(DRONECANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE >= 4, "Invalid memory layout");
 
 /**
  * This is the core structure that keeps all of the states and allocated resources of the library instance.
  * The application should never access any of the fields directly! Instead, API functions should be used.
  */
-struct CanardInstance
+struct DroneCanardInstance
 {
     uint8_t node_id;                                ///< Local node ID; may be zero if the node is anonymous
 
-    CanardShouldAcceptTransfer should_accept;       ///< Function to decide whether the application wants this transfer
-    CanardOnTransferReception on_reception;         ///< Function the library calls after RX transfer is complete
+    DroneCanardShouldAcceptTransfer should_accept;       ///< Function to decide whether the application wants this transfer
+    DroneCanardOnTransferReception on_reception;         ///< Function the library calls after RX transfer is complete
 
-    CanardPoolAllocator allocator;                  ///< Pool allocator
+    DroneCanardPoolAllocator allocator;                  ///< Pool allocator
 
-    CanardRxState* rx_states;                       ///< RX transfer states
-    CanardTxQueueItem* tx_queue;                    ///< TX frames awaiting transmission
+    DroneCanardRxState* rx_states;                       ///< RX transfer states
+    DroneCanardTxQueueItem* tx_queue;                    ///< TX frames awaiting transmission
 
     void* user_reference;                           ///< User pointer that can link this instance with other objects
 
-#if CANARD_ENABLE_TAO_OPTION
+#if DRONECANARD_ENABLE_TAO_OPTION
     bool tao_disabled;                              ///< True if TAO is disabled
 #endif
 };
@@ -322,7 +322,7 @@ struct CanardInstance
  * An instance of it is passed to the application via callback when the library receives a new transfer.
  * Pointers to the structure and all its fields are invalidated after the callback returns.
  */
-struct CanardRxTransfer
+struct DroneCanardRxTransfer
 {
     /**
      * Timestamp at which the first frame of this transfer was received.
@@ -331,7 +331,7 @@ struct CanardRxTransfer
 
     /**
      * Payload is scattered across three storages:
-     *  - Head points to CanardRxState.buffer_head (length of which is up to CANARD_PAYLOAD_HEAD_SIZE), or to the
+     *  - Head points to DroneCanardRxState.buffer_head (length of which is up to DRONECANARD_PAYLOAD_HEAD_SIZE), or to the
      *    payload field (possibly with offset) of the last received CAN frame.
      *
      *  - Middle is located in the linked list of dynamic blocks (only for multi-frame transfers).
@@ -345,14 +345,14 @@ struct CanardRxTransfer
      * of the payload of the CAN frame.
      *
      * In simple cases it should be possible to get data directly from the head and/or tail pointers.
-     * Otherwise it is advised to use canardDecodeScalar().
+     * Otherwise it is advised to use dronecanardDecodeScalar().
      */
     const uint8_t* payload_head;            ///< Always valid, i.e. not NULL.
                                             ///< For multi frame transfers, the maximum size is defined in the constant
-                                            ///< CANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE.
+                                            ///< DRONECANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE.
                                             ///< For single-frame transfers, the size is defined in the
                                             ///< field payload_len.
-    CanardBufferBlock* payload_middle;      ///< May be NULL if the buffer was not needed. Always NULL for single-frame
+    DroneCanardBufferBlock* payload_middle;      ///< May be NULL if the buffer was not needed. Always NULL for single-frame
                                             ///< transfers.
     const uint8_t* payload_tail;            ///< Last bytes of multi-frame transfers. Always NULL for single-frame
                                             ///< transfers.
@@ -362,14 +362,14 @@ struct CanardRxTransfer
      * These fields identify the transfer for the application.
      */
     uint16_t data_type_id;                  ///< 0 to 255 for services, 0 to 65535 for messages
-    uint8_t transfer_type;                  ///< See CanardTransferType
+    uint8_t transfer_type;                  ///< See DroneCanardTransferType
     uint8_t transfer_id;                    ///< 0 to 31
     uint8_t priority;                       ///< 0 to 31
     uint8_t source_node_id;                 ///< 1 to 127, or 0 if the source is anonymous
-#if CANARD_ENABLE_TAO_OPTION
+#if DRONECANARD_ENABLE_TAO_OPTION
     bool tao;
 #endif
-#if CANARD_ENABLE_CANFD
+#if DRONECANARD_ENABLE_CANFD
     bool canfd;                             ///< frame canfd
 #endif
 };
@@ -380,13 +380,13 @@ struct CanardRxTransfer
  *
  * Typically, size of the memory pool should not be less than 1K, although it depends on the application. The
  * recommended way to detect the required pool size is to measure the peak pool usage after a stress-test. Refer to
- * the function canardGetPoolAllocatorStatistics().
+ * the function dronecanardGetPoolAllocatorStatistics().
  */
-void canardInit(CanardInstance* out_ins,                    ///< Uninitialized library instance
+void dronecanardInit(DroneCanardInstance* out_ins,                    ///< Uninitialized library instance
                 void* mem_arena,                            ///< Raw memory chunk used for dynamic allocation
                 size_t mem_arena_size,                      ///< Size of the above, in bytes
-                CanardOnTransferReception on_reception,     ///< Callback, see CanardOnTransferReception
-                CanardShouldAcceptTransfer should_accept,   ///< Callback, see CanardShouldAcceptTransfer
+                DroneCanardOnTransferReception on_reception,     ///< Callback, see DroneCanardOnTransferReception
+                DroneCanardShouldAcceptTransfer should_accept,   ///< Callback, see DroneCanardShouldAcceptTransfer
                 void* user_reference);                      ///< Optional pointer for user's convenience, can be NULL
 
 /**
@@ -394,25 +394,25 @@ void canardInit(CanardInstance* out_ins,                    ///< Uninitialized l
  * The user pointer is configured once during initialization.
  * It can be used to store references to any user-specific data, or to link the instance object with C++ objects.
  */
-void* canardGetUserReference(CanardInstance* ins);
+void* dronecanardGetUserReference(DroneCanardInstance* ins);
 
 /**
  * Assigns a new node ID value to the current node.
  * Node ID can be assigned only once.
  */
-void canardSetLocalNodeID(CanardInstance* ins,
+void dronecanardSetLocalNodeID(DroneCanardInstance* ins,
                           uint8_t self_node_id);
 
 /**
  * Returns node ID of the local node.
  * Returns zero (broadcast) if the node ID is not set, i.e. if the local node is anonymous.
  */
-uint8_t canardGetLocalNodeID(const CanardInstance* ins);
+uint8_t dronecanardGetLocalNodeID(const DroneCanardInstance* ins);
 
 /**
  * Forgets the current node ID value so that a new Node ID can be assigned.
  */
-void canardForgetLocalNodeID(CanardInstance* ins);
+void dronecanardForgetLocalNodeID(DroneCanardInstance* ins);
 
 /**
  * Sends a broadcast transfer.
@@ -426,16 +426,16 @@ void canardForgetLocalNodeID(CanardInstance* ins);
  *
  * Returns the number of frames enqueued, or negative error code.
  */
-int16_t canardBroadcast(CanardInstance* ins,            ///< Library instance
+int16_t dronecanardBroadcast(DroneCanardInstance* ins,            ///< Library instance
                         uint16_t data_type_id,          ///< Refer to the specification
                         uint8_t* inout_transfer_id,     ///< Pointer to a persistent variable containing the transfer ID
-                        uint8_t priority,               ///< Refer to definitions CANARD_TRANSFER_PRIORITY_*
+                        uint8_t priority,               ///< Refer to definitions DRONECANARD_TRANSFER_PRIORITY_*
                         const void* payload,            ///< Transfer payload
                         uint16_t payload_len            ///< Length of the above, in bytes
-#if CANARD_MULTI_IFACE
+#if DRONECANARD_MULTI_IFACE
                         ,uint8_t iface_mask               ///< Bitmask of interfaces to transmit on
 #endif
-#if CANARD_ENABLE_CANFD
+#if DRONECANARD_ENABLE_CANFD
                         ,bool canfd                      ///< Is the frame canfd
 #endif
                         );
@@ -448,7 +448,7 @@ int16_t canardBroadcast(CanardInstance* ins,            ///< Library instance
  * @return
  */
 uint16_t calculateCRC(const void *payload, uint16_t payload_len, uint64_t data_type_signature
-#if CANARD_ENABLE_CANFD
+#if DRONECANARD_ENABLE_CANFD
         ,bool canfd
 #endif
 );
@@ -463,22 +463,22 @@ uint16_t calculateCRC(const void *payload, uint16_t payload_len, uint64_t data_t
  * specification.
  *
  * For Response transfers, the pointer to the Transfer ID will be treated as const (i.e. read-only), and normally it
- * should point to the transfer_id field of the structure CanardRxTransfer.
+ * should point to the transfer_id field of the structure DroneCanardRxTransfer.
  *
  * Returns the number of frames enqueued, or negative error code.
  */
-int16_t canardRequestOrRespond(CanardInstance* ins,             ///< Library instance
+int16_t dronecanardRequestOrRespond(DroneCanardInstance* ins,             ///< Library instance
                                uint8_t destination_node_id,     ///< Node ID of the server/client
                                uint8_t data_type_id,            ///< Refer to the specification
                                uint8_t* inout_transfer_id,      ///< Pointer to a persistent variable with transfer ID
-                               uint8_t priority,                ///< Refer to definitions CANARD_TRANSFER_PRIORITY_*
-                               CanardRequestResponse kind,      ///< Refer to CanardRequestResponse
+                               uint8_t priority,                ///< Refer to definitions DRONECANARD_TRANSFER_PRIORITY_*
+                               DroneCanardRequestResponse kind,      ///< Refer to DroneCanardRequestResponse
                                const void* payload,             ///< Transfer payload
                                uint16_t payload_len             ///< Length of the above, in bytes
-#if CANARD_MULTI_IFACE
+#if DRONECANARD_MULTI_IFACE
                                ,uint8_t iface_mask               ///< Bitmask of interfaces to transmit on
 #endif
-#if CANARD_ENABLE_CANFD
+#if DRONECANARD_ENABLE_CANFD
                                 ,bool canfd                     ///< Is the frame canfd
 #endif
                             );
@@ -486,18 +486,18 @@ int16_t canardRequestOrRespond(CanardInstance* ins,             ///< Library ins
 /**
  * Returns a pointer to the top priority frame in the TX queue.
  * Returns NULL if the TX queue is empty.
- * The application will call this function after canardBroadcast() or canardRequestOrRespond() to transmit generated
+ * The application will call this function after dronecanardBroadcast() or dronecanardRequestOrRespond() to transmit generated
  * frames over the CAN bus.
  */
-const CanardCANFrame* canardPeekTxQueue(const CanardInstance* ins);
+const DroneCanardCANFrame* dronecanardPeekTxQueue(const DroneCanardInstance* ins);
 
 /**
  * Removes the top priority frame from the TX queue.
- * The application will call this function after canardPeekTxQueue() once the obtained frame has been processed.
- * Calling canardBroadcast() or canardRequestOrRespond() between canardPeekTxQueue() and canardPopTxQueue()
+ * The application will call this function after dronecanardPeekTxQueue() once the obtained frame has been processed.
+ * Calling dronecanardBroadcast() or dronecanardRequestOrRespond() between dronecanardPeekTxQueue() and dronecanardPopTxQueue()
  * is NOT allowed, because it may change the frame at the top of the TX queue.
  */
-void canardPopTxQueue(CanardInstance* ins);
+void dronecanardPopTxQueue(DroneCanardInstance* ins);
 
 /**
  * Processes a received CAN frame with a timestamp.
@@ -505,17 +505,17 @@ void canardPopTxQueue(CanardInstance* ins);
  *
  * Return value will report any errors in decoding packets.
  */
-int16_t canardHandleRxFrame(CanardInstance* ins,
-                            const CanardCANFrame* frame,
-                            CanardRxTransfer *out_transfer,
+int16_t dronecanardHandleRxFrame(DroneCanardInstance* ins,
+                            const DroneCanardCANFrame* frame,
+                            DroneCanardRxTransfer *out_transfer,
                             uint64_t timestamp_usec);
 
 /**
  * Traverses the list of transfers and removes those that were last updated more than timeout_usec microseconds ago.
  * This function must be invoked by the application periodically, about once a second.
- * Also refer to the constant CANARD_RECOMMENDED_STALE_TRANSFER_CLEANUP_INTERVAL_USEC.
+ * Also refer to the constant DRONECANARD_RECOMMENDED_STALE_TRANSFER_CLEANUP_INTERVAL_USEC.
  */
-void canardCleanupStaleTransfers(CanardInstance* ins,
+void dronecanardCleanupStaleTransfers(DroneCanardInstance* ins,
                                  uint64_t current_time_usec);
 
 /**
@@ -545,7 +545,7 @@ void canardCleanupStaleTransfers(CanardInstance* ins,
  *  | [33, 64]   | false           | uint64_t                                 |
  *  | [33, 64]   | true            | int64_t, or 64-bit float                 |
  */
-int16_t canardDecodeScalar(const CanardRxTransfer* transfer,    ///< The RX transfer where the data will be copied from
+int16_t dronecanardDecodeScalar(const DroneCanardRxTransfer* transfer,    ///< The RX transfer where the data will be copied from
                            uint32_t bit_offset,                 ///< Offset, in bits, from the beginning of the transfer
                            uint8_t bit_length,                  ///< Length of the value, in bits; see the table
                            bool value_is_signed,                ///< True if the value can be negative; see the table
@@ -571,7 +571,7 @@ int16_t canardDecodeScalar(const CanardRxTransfer* transfer,    ///< The RX tran
  *  | [17, 32]   | uint32_t, int32_t, or 32-bit float       |
  *  | [33, 64]   | uint64_t, int64_t, or 64-bit float       |
  */
-void canardEncodeScalar(void* destination,      ///< Destination buffer where the result will be stored
+void dronecanardEncodeScalar(void* destination,      ///< Destination buffer where the result will be stored
                         uint32_t bit_offset,    ///< Offset, in bits, from the beginning of the destination buffer
                         uint8_t bit_length,     ///< Length of the value, in bits; see the table
                         const void* value);     ///< Pointer to the value; see the table
@@ -581,21 +581,21 @@ void canardEncodeScalar(void* destination,      ///< Destination buffer where th
  * to store the payload of the transfer.
  *
  * If the application needs to send new transfers from the transfer reception callback, this function should be
- * invoked right before calling canardBroadcast() or canardRequestOrRespond(). Not releasing the buffers before
+ * invoked right before calling dronecanardBroadcast() or dronecanardRequestOrRespond(). Not releasing the buffers before
  * transmission may cause higher peak usage of the memory pool.
  *
  * If the application didn't call this function before returning from the callback, the library will do that,
  * so it is guaranteed that the memory will not leak.
  */
-void canardReleaseRxTransferPayload(CanardInstance* ins,
-                                    CanardRxTransfer* transfer);
+void dronecanardReleaseRxTransferPayload(DroneCanardInstance* ins,
+                                    DroneCanardRxTransfer* transfer);
 
 /**
  * Returns a copy of the pool allocator usage statistics.
- * Refer to the type CanardPoolAllocatorStatistics.
+ * Refer to the type DroneCanardPoolAllocatorStatistics.
  * Use this function to determine worst case memory needs of your application.
  */
-CanardPoolAllocatorStatistics canardGetPoolAllocatorStatistics(CanardInstance* ins);
+DroneCanardPoolAllocatorStatistics dronecanardGetPoolAllocatorStatistics(DroneCanardInstance* ins);
 
 /**
  * Float16 marshaling helpers.
@@ -604,16 +604,16 @@ CanardPoolAllocatorStatistics canardGetPoolAllocatorStatistics(CanardInstance* i
  * Vast majority of modern computers and microcontrollers use IEEE 754, so this limitation should not affect
  * portability.
  */
-uint16_t canardConvertNativeFloatToFloat16(float value);
-float canardConvertFloat16ToNativeFloat(uint16_t value);
+uint16_t dronecanardConvertNativeFloatToFloat16(float value);
+float dronecanardConvertFloat16ToNativeFloat(uint16_t value);
 
 /// Abort the build if the current platform is not supported.
-#if CANARD_ENABLE_CANFD
-CANARD_STATIC_ASSERT(((uint32_t)CANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE) < 128,
+#if DRONECANARD_ENABLE_CANFD
+DRONECANARD_STATIC_ASSERT(((uint32_t)DRONECANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE) < 128,
                      "Platforms where sizeof(void*) > 4 are not supported. "
                      "On AMD64 use 32-bit mode (e.g. GCC flag -m32).");
 #else
-_Static_assert(((uint32_t)CANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE) < 32,
+_Static_assert(((uint32_t)DRONECANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE) < 32,
                      "Platforms where sizeof(void*) > 4 are not supported. "
                      "On AMD64 use 32-bit mode (e.g. GCC flag -m32).");
 #endif
