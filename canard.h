@@ -76,7 +76,7 @@ extern "C" {
 #ifndef DRONECANARD_STATIC_ASSERT
 # if (defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)) ||\
      (defined(__cplusplus) && (__cplusplus >= 201103L))
-#  define DRONECANARD_STATIC_ASSERT static_assert
+#  define DRONECANARD_STATIC_ASSERT(x, ...) typedef char DRONECANARD_GLUE(_static_assertion_, __LINE__)[(x) ? 1 : -1]
 # else
 #  define DRONECANARD_STATIC_ASSERT(x, ...) typedef char DRONECANARD_GLUE(_static_assertion_, __LINE__)[(x) ? 1 : -1]
 # endif
@@ -291,8 +291,8 @@ struct DroneCanardRxState
 #pragma GCC diagnostic pop
 };
 
-_Static_assert(offsetof(DroneCanardRxState, buffer_head) <= 28, "Invalid memory layout");
-_Static_assert(DRONECANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE >= 4, "Invalid memory layout");
+DRONECANARD_STATIC_ASSERT(offsetof(DroneCanardRxState, buffer_head) <= 28, "Invalid memory layout");
+DRONECANARD_STATIC_ASSERT(DRONECANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE >= 4, "Invalid memory layout");
 
 /**
  * This is the core structure that keeps all of the states and allocated resources of the library instance.
@@ -613,7 +613,7 @@ DRONECANARD_STATIC_ASSERT(((uint32_t)DRONECANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE
                      "Platforms where sizeof(void*) > 4 are not supported. "
                      "On AMD64 use 32-bit mode (e.g. GCC flag -m32).");
 #else
-_Static_assert(((uint32_t)DRONECANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE) < 32,
+DRONECANARD_STATIC_ASSERT(((uint32_t)DRONECANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE) < 32,
                      "Platforms where sizeof(void*) > 4 are not supported. "
                      "On AMD64 use 32-bit mode (e.g. GCC flag -m32).");
 #endif
