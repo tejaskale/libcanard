@@ -40,8 +40,9 @@ extern "C" {
 
 /// This macro is needed only for testing and development. Do not redefine this in production.
 #ifndef CANARD_INTERNAL
-#define CANARD_INTERNAL static
+# define CANARD_INTERNAL static
 #endif
+
 
 CANARD_INTERNAL CanardRxState* traverseRxStates(CanardInstance* ins,
                                                 uint32_t transfer_descriptor);
@@ -95,14 +96,12 @@ CANARD_INTERNAL int16_t enqueueTxFrames(CanardInstance* ins,
                                         const uint8_t* payload,
                                         uint16_t payload_len
 #if CANARD_MULTI_IFACE
-                                        ,
-                                        uint8_t iface_mask
+                                        ,uint8_t iface_mask
 #endif
 #if CANARD_ENABLE_CANFD
-                                        ,
-                                        bool canfd
+                                        ,bool canfd
 #endif
-);
+                                        );
 
 CANARD_INTERNAL void copyBitArray(const uint8_t* src,
                                   uint32_t src_offset,
@@ -158,12 +157,11 @@ CANARD_INTERNAL void* allocateBlock(CanardPoolAllocator* allocator);
 CANARD_INTERNAL void freeBlock(CanardPoolAllocator* allocator,
                                void* p);
 
-CANARD_INTERNAL uint16_t calculateCRC(const void* payload,
-                                      uint16_t payload_len,
+CANARD_INTERNAL uint16_t calculateCRC(const void* payload, 
+                                      uint16_t payload_len, 
                                       uint64_t data_type_signature
 #if CANARD_ENABLE_CANFD
-                                      ,
-                                      bool canfd
+                                      ,bool canfd
 #endif
 );
 
